@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/AirstrikeSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "starfall_matrix"
+display_name = "Starfall Matrix"
+description = "Marks twelve spatial fractures, then detonates them in a cascading constellation."
+spell_scene = ExtResource("2")
+visual_style = 7
+primary_color = Color(0.58, 0.18, 1, 1)
+secondary_color = Color(0.25, 1, 0.88, 1)
+unlocked_by_default = false
+unlock_cost = 9800
+weapon_id = "gauntlet"
+fusion_eligible = false
+damage = 112.0
+cooldown = 5.4
+cast_range = 1050.0
+speed = 0.0
+area_radius = 82.0
+knockback_force = 300.0
+burst_count = 12
+burst_interval = 0.18
+impact_delay = 2.4
+sound_pitch_hz = 138.0
+sound_duration = 0.28

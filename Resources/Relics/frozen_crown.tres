@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RelicDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/relic_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "frozen_crown"
+display_name = "Frozen Crown"
+description = "Proof of victory over the Frost Warden."
+source_boss_id = "frost_warden"
+color = Color(0.42, 0.86, 1, 1)

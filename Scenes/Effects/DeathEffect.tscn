@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Effects/burst_effect.gd" id="1_burst"]
+
+[node name="DeathEffect" type="Node2D"]
+z_index = 10
+script = ExtResource("1_burst")
+lifetime = 0.48
+maximum_radius = 52.0
+line_width = 9.0

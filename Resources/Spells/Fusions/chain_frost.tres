@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/Fusions/ChainFrost.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "chain_frost"
+display_name = "Chain Frost"
+description = "Frozen lightning leaps between enemies and locks them in ice."
+spell_scene = ExtResource("2")
+visual_style = 1
+primary_color = Color(0.24, 0.72, 1, 1)
+secondary_color = Color(0.9, 0.99, 1, 1)
+damage = 38.0
+cooldown = 2.8
+cast_range = 760.0
+speed = 0.0
+knockback_force = 180.0
+duration = 0.42
+intrinsic_status = "stun"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 0.8
+sound_pitch_hz = 880.0
+sound_duration = 0.34

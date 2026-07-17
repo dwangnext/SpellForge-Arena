@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/character_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "cinder_adept"
+display_name = "Cinder Adept"
+description = "Fragile, but deals 18% more spell damage."
+unlock_cost = 150
+health_multiplier = 0.88
+damage_multiplier = 1.18
+color = Color(0.95, 0.25, 0.08, 1)

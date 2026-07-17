@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/AirstrikeSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "airstrike"
+display_name = "Airstrike"
+description = "Paints nine glowing strike zones across the target area. After a three-second warning, the zones detonate one by one in a randomized sequence."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(1, 0.22, 0.08, 1)
+secondary_color = Color(1, 0.86, 0.25, 1)
+unlocked_by_default = false
+unlock_cost = 4200
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 78.0
+cooldown = 6.0
+cast_range = 950.0
+speed = 0.0
+area_radius = 68.0
+knockback_force = 260.0
+burst_count = 9
+burst_interval = 0.24
+impact_delay = 3.0
+sound_pitch_hz = 165.0
+sound_duration = 0.25

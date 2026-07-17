@@ -1,0 +1,11 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Enemies/enemy_spawner.gd" id="1_spawner"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Enemy.tscn" id="2_enemy"]
+[ext_resource type="Resource" path="res://Resources/Enemies/scout.tres" id="3_scout"]
+[ext_resource type="Resource" path="res://Resources/Enemies/brute.tres" id="4_brute"]
+
+[node name="EnemySpawner" type="Node2D"]
+script = ExtResource("1_spawner")
+enemy_scene = ExtResource("2_enemy")
+enemy_definitions = Array[Resource]([ExtResource("3_scout"), ExtResource("4_brute")])

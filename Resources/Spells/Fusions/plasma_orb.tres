@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/Fusions/PlasmaOrb.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "plasma_orb"
+display_name = "Plasma Orb"
+description = "An unstable sphere of fire and lightning that detonates in a charged blast."
+spell_scene = ExtResource("2")
+visual_style = 2
+primary_color = Color(0.42, 0.72, 1, 1)
+secondary_color = Color(1, 0.34, 0.08, 1)
+damage = 54.0
+cooldown = 1.25
+cast_range = 920.0
+speed = 740.0
+area_radius = 82.0
+knockback_force = 470.0
+intrinsic_status = "stun"
+intrinsic_status_chance = 0.45
+intrinsic_status_duration = 0.65
+sound_pitch_hz = 350.0
+sound_duration = 0.3

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/fire_tornado.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "fire_tornado"
+display_name = "FIRE TORNADO"
+description = "Fireball and Tornado merge into a roaming inferno."
+priority = 50
+component_spell_ids = PackedStringArray("fireball", "tornado")
+combination_window = 5.0
+output_spell = ExtResource("2")
+damage_multiplier = 1.25
+granted_status = 2
+status_damage = 8.0
+status_duration = 4.0

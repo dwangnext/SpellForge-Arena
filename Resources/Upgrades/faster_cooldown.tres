@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "faster_cooldown"
+display_name = "Quick Casting"
+description = "-{value}% spell cooldown"
+effect_type = 1
+magnitude = 0.1
+maximum_stacks = 7
+accent_color = Color(0.55, 0.83, 1, 1)

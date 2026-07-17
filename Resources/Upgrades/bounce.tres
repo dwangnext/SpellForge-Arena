@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "bounce"
+display_name = "Ricochet Sigil"
+description = "+1 projectile bounce"
+effect_type = 6
+magnitude = 1.0
+maximum_stacks = 5
+accent_color = Color(1, 0.46, 0.76, 1)

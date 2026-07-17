@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/character_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "arcanist"
+display_name = "Arcanist"
+description = "A balanced master of all schools."
+unlocked_by_default = true
+unlock_cost = 0
+color = Color(0.44, 0.39, 0.85, 1)

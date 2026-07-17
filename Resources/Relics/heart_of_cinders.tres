@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RelicDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/relic_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "heart_of_cinders"
+display_name = "Heart of Cinders"
+description = "Proof of victory over the Ember Colossus."
+source_boss_id = "ember_colossus"
+color = Color(1, 0.3, 0.08, 1)

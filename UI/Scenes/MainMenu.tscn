@@ -1,0 +1,574 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://UI/Scripts/main_menu.gd" id="1"]
+[ext_resource type="Script" path="res://UI/Scripts/fusion_drop_slot.gd" id="2_slot"]
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+process_mode = 3
+script = ExtResource("1")
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.022, 0.05, 0.96)
+[node name="Decoration" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.12
+anchor_top = 0.08
+anchor_right = 0.88
+anchor_bottom = 0.92
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.18, 0.12, 0.38, 0.24)
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+[node name="MenuPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(520, 600)
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+[node name="Title" type="Label" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.66, 1, 1)
+theme_override_colors/font_outline_color = Color(0.04, 0.02, 0.1, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 52
+text = "SPELLFORGE ARENA"
+horizontal_alignment = 1
+[node name="Subtitle" type="Label" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.75, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+text = "FORGE THE IMPOSSIBLE. SURVIVE THE ENDLESS."
+horizontal_alignment = 1
+[node name="Spacer" type="Control" parent="Center/MenuPanel"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+[node name="StartButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "ENTER THE ARENA"
+[node name="CoopHint" type="Label" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.95, 0.88, 1)
+text = "CO-OP — HOST OR PASTE A 6-CHARACTER JOIN CODE (MAX 3)"
+horizontal_alignment = 1
+[node name="CoopRow" type="HBoxContainer" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="HostButton" type="Button" parent="Center/MenuPanel/CoopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
+text = "HOST GAME"
+[node name="HomeJoinCode" type="LineEdit" parent="Center/MenuPanel/CoopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(185, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "PASTE JOIN CODE"
+max_length = 6
+alignment = 1
+[node name="HomeJoinButton" type="Button" parent="Center/MenuPanel/CoopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 46)
+layout_mode = 2
+text = "JOIN"
+[node name="PlayerCode" type="Label" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "YOUR PLAYER CODE: ------"
+horizontal_alignment = 1
+[node name="SettingsButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "ACCESSIBILITY & AUDIO"
+[node name="WeaponButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "CHANGE WEAPON — SPELLFORGE WAND"
+[node name="AbilitiesButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "ABILITY SHOP"
+[node name="FusionsButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "EXPLORE FUSION SPELLS"
+[node name="RedeemButton" type="Button" parent="Center/MenuPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "REDEEM CODE"
+[node name="QuitButton" type="Button" parent="Center/MenuPanel"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "QUIT"
+[node name="LobbyPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(650, 520)
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+[node name="Title" type="Label" parent="Center/LobbyPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.95, 0.88, 1)
+theme_override_font_sizes/font_size = 38
+text = "CO-OP LOBBY"
+horizontal_alignment = 1
+[node name="LobbyCode" type="Label" parent="Center/LobbyPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.83, 0.28, 1)
+theme_override_font_sizes/font_size = 30
+text = "JOIN CODE: ------"
+horizontal_alignment = 1
+[node name="Hint" type="Label" parent="Center/LobbyPanel"]
+layout_mode = 2
+text = "Share this code with up to two teammates. The host controls when the run begins."
+horizontal_alignment = 1
+[node name="LobbyPlayers" type="VBoxContainer" parent="Center/LobbyPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="LobbyScaling" type="Label" parent="Center/LobbyPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.68, 0.32, 1)
+text = "ENEMY HEALTH: 1.00×"
+horizontal_alignment = 1
+[node name="LobbyStatus" type="Label" parent="Center/LobbyPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Connecting…"
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="LobbyStartButton" type="Button" parent="Center/LobbyPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "HOST — START GAME"
+[node name="BackButton" type="Button" parent="Center/LobbyPanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "LEAVE LOBBY"
+[node name="WeaponPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(720, 590)
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+[node name="Title" type="Label" parent="Center/WeaponPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 38
+text = "CHOOSE YOUR WEAPON"
+horizontal_alignment = 1
+[node name="Hint" type="Label" parent="Center/WeaponPanel"]
+layout_mode = 2
+text = "Each weapon has its own six-slot ability collection and combat identity."
+horizontal_alignment = 1
+[node name="WandButton" type="Button" parent="Center/WeaponPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+text = "SPELLFORGE WAND\nFlexible elemental spells, area control, and forged fusions"
+[node name="RevolverButton" type="Button" parent="Center/WeaponPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+text = "ARCANE REVOLVER\nRapid six-shot salvos, scatter shells, rail rounds, and stunning ammunition"
+[node name="GauntletButton" type="Button" parent="Center/WeaponPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+text = "RIFT GAUNTLET\nSingularities, phase weapons, and reality-breaking barrages"
+[node name="WeaponStatus" type="Label" parent="Center/WeaponPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "EQUIPPED: SPELLFORGE WAND"
+horizontal_alignment = 1
+[node name="BackButton" type="Button" parent="Center/WeaponPanel"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "BACK"
+[node name="SettingsPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(560, 540)
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="Title" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ACCESSIBILITY & AUDIO"
+horizontal_alignment = 1
+[node name="MasterLabel" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+text = "Master Volume"
+[node name="MasterSlider" type="HSlider" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+[node name="MusicLabel" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+text = "Music Volume"
+[node name="MusicSlider" type="HSlider" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+[node name="SFXLabel" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+text = "Sound Effects Volume"
+[node name="SFXSlider" type="HSlider" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+[node name="ShakeLabel" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+text = "Screen Shake"
+[node name="ShakeSlider" type="HSlider" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+[node name="FlashLabel" type="Label" parent="Center/SettingsPanel"]
+layout_mode = 2
+text = "Screen Flashes"
+[node name="FlashSlider" type="HSlider" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+[node name="ReducedMotion" type="CheckBox" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reduced motion"
+[node name="HighContrast" type="CheckBox" parent="Center/SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "High-contrast interface"
+
+[node name="AbilityPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(620, 560)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/AbilityPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "ABILITY SHOP"
+horizontal_alignment = 1
+
+[node name="AbilityCoins" type="Label" parent="Center/AbilityPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.32, 1)
+theme_override_font_sizes/font_size = 22
+text = "VAULT COINS: 0"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Center/AbilityPanel"]
+layout_mode = 2
+text = "Abilities are permanent and available immediately after purchase."
+horizontal_alignment = 1
+
+[node name="AbilityWeaponFilter" type="OptionButton" parent="Center/AbilityPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+tooltip_text = "Show abilities for one weapon at a time."
+
+[node name="Scroll" type="ScrollContainer" parent="Center/AbilityPanel"]
+custom_minimum_size = Vector2(600, 330)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AbilityContent" type="VBoxContainer" parent="Center/AbilityPanel/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="BackButton" type="Button" parent="Center/AbilityPanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "BACK"
+
+[node name="FusionPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(1120, 620)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Center/FusionPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "EXPLORE FUSION SPELLS"
+horizontal_alignment = 1
+
+[node name="FusionCoins" type="Label" parent="Center/FusionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.32, 1)
+theme_override_font_sizes/font_size = 20
+text = "VAULT COINS: 0"
+horizontal_alignment = 1
+
+[node name="Workspace" type="HBoxContainer" parent="Center/FusionPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="CatalogColumn" type="VBoxContainer" parent="Center/FusionPanel/Workspace"]
+custom_minimum_size = Vector2(270, 0)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Center/FusionPanel/Workspace/CatalogColumn"]
+layout_mode = 2
+text = "SPELL CATALOG — DRAG OR CLICK"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Center/FusionPanel/Workspace/CatalogColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FusionCatalog" type="VBoxContainer" parent="Center/FusionPanel/Workspace/CatalogColumn/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="Slots" type="VBoxContainer" parent="Center/FusionPanel/Workspace"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="FusionSlotTop" type="PanelContainer" parent="Center/FusionPanel/Workspace/Slots"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_slot")
+placeholder = "DROP FIRST SPELL"
+
+[node name="Plus" type="Label" parent="Center/FusionPanel/Workspace/Slots"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "+"
+horizontal_alignment = 1
+
+[node name="FusionSlotBottom" type="PanelContainer" parent="Center/FusionPanel/Workspace/Slots"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_slot")
+placeholder = "DROP SECOND SPELL"
+
+[node name="Arrow" type="Label" parent="Center/FusionPanel/Workspace"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "→"
+vertical_alignment = 1
+
+[node name="Result" type="PanelContainer" parent="Center/FusionPanel/Workspace"]
+custom_minimum_size = Vector2(430, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="Center/FusionPanel/Workspace/Result"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Center/FusionPanel/Workspace/Result/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="FusionResultName" type="Label" parent="Center/FusionPanel/Workspace/Result/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "UNKNOWN FUSION"
+horizontal_alignment = 1
+
+[node name="FusionResultDetails" type="Label" parent="Center/FusionPanel/Workspace/Result/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "Drag two compatible spells into the forge slots."
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="FusionPurchase" type="Button" parent="Center/FusionPanel/Workspace/Result/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "NO RECIPE"
+disabled = true
+
+[node name="BackButton" type="Button" parent="Center/FusionPanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "BACK"
+
+[node name="EquipPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(850, 600)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Center/EquipPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "EQUIP SPELLS"
+horizontal_alignment = 1
+
+[node name="EquipSubtitle" type="Label" parent="Center/EquipPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Choose six owned spells. Purchased fusion spells can be equipped directly."
+horizontal_alignment = 1
+
+[node name="EquipSummary" type="Label" parent="Center/EquipPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "EQUIPPED 0 / 6     KEYS 1–6"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Center/EquipPanel"]
+custom_minimum_size = Vector2(820, 420)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EquipContent" type="GridContainer" parent="Center/EquipPanel/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="Buttons" type="HBoxContainer" parent="Center/EquipPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="BackButton" type="Button" parent="Center/EquipPanel/Buttons"]
+custom_minimum_size = Vector2(180, 50)
+layout_mode = 2
+text = "BACK"
+
+[node name="EquipConfirm" type="Button" parent="Center/EquipPanel/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ENTER WITH THIS LOADOUT"
+
+[node name="RedeemPanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(560, 400)
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="Center/RedeemPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "REDEEM CODE"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Center/RedeemPanel"]
+layout_mode = 2
+text = "Enter a code below."
+horizontal_alignment = 1
+
+[node name="RedeemCode" type="LineEdit" parent="Center/RedeemPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+placeholder_text = "CODE"
+max_length = 24
+alignment = 1
+
+[node name="SubmitButton" type="Button" parent="Center/RedeemPanel"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "REDEEM"
+
+[node name="RedeemStatus" type="Label" parent="Center/RedeemPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Enter a code to unlock its reward."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackButton" type="Button" parent="Center/RedeemPanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "BACK"
+[node name="BackButton" type="Button" parent="Center/SettingsPanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "BACK"
+[connection signal="pressed" from="Center/MenuPanel/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/CoopRow/HostButton" to="." method="_on_host_pressed"]
+[connection signal="text_submitted" from="Center/MenuPanel/CoopRow/HomeJoinCode" to="." method="_on_join_submitted"]
+[connection signal="pressed" from="Center/MenuPanel/CoopRow/HomeJoinButton" to="." method="_on_join_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/WeaponButton" to="." method="_on_weapon_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/AbilitiesButton" to="." method="_on_abilities_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/FusionsButton" to="." method="_on_fusions_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/RedeemButton" to="." method="_on_redeem_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/QuitButton" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Center/LobbyPanel/LobbyStartButton" to="." method="_on_lobby_start_pressed"]
+[connection signal="pressed" from="Center/LobbyPanel/BackButton" to="." method="_on_lobby_back_pressed"]
+[connection signal="pressed" from="Center/WeaponPanel/WandButton" to="." method="_select_weapon" binds= ["wand"]]
+[connection signal="pressed" from="Center/WeaponPanel/RevolverButton" to="." method="_select_weapon" binds= ["revolver"]]
+[connection signal="pressed" from="Center/WeaponPanel/GauntletButton" to="." method="_select_weapon" binds= ["gauntlet"]]
+[connection signal="pressed" from="Center/WeaponPanel/BackButton" to="." method="_on_weapon_back_pressed"]
+[connection signal="pressed" from="Center/SettingsPanel/BackButton" to="." method="_on_settings_back_pressed"]
+[connection signal="pressed" from="Center/AbilityPanel/BackButton" to="." method="_on_abilities_back_pressed"]
+[connection signal="item_selected" from="Center/AbilityPanel/AbilityWeaponFilter" to="." method="_on_ability_weapon_selected"]
+[connection signal="pressed" from="Center/FusionPanel/Workspace/Result/Margin/VBox/FusionPurchase" to="." method="_on_fusion_purchase_pressed"]
+[connection signal="pressed" from="Center/FusionPanel/BackButton" to="." method="_on_fusions_back_pressed"]
+[connection signal="pressed" from="Center/EquipPanel/Buttons/BackButton" to="." method="_on_equip_back_pressed"]
+[connection signal="pressed" from="Center/EquipPanel/Buttons/EquipConfirm" to="." method="_on_equip_confirm_pressed"]
+[connection signal="text_submitted" from="Center/RedeemPanel/RedeemCode" to="." method="_on_redeem_submit_pressed"]
+[connection signal="pressed" from="Center/RedeemPanel/SubmitButton" to="." method="_on_redeem_submit_pressed"]
+[connection signal="pressed" from="Center/RedeemPanel/BackButton" to="." method="_on_redeem_back_pressed"]

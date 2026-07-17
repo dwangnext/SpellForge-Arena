@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="PermanentUpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/permanent_upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "swiftness"
+display_name = "Eternal Swiftness"
+description = "+5% movement speed per rank"
+effect_type = 1
+value_per_rank = 0.05
+maximum_rank = 8
+base_cost = 35
+cost_growth = 1.65

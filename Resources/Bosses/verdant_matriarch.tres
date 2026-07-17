@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/boss_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "verdant_matriarch"
+display_name = "Verdant Matriarch"
+subtitle = "THE GARDEN THAT HUNTS"
+visual_style = 0
+primary_color = Color(0.28, 0.82, 0.18, 1)
+secondary_color = Color(0.86, 0.25, 0.72, 1)
+maximum_health = 4700.0
+movement_speed = 78.0
+contact_damage = 43.0
+defense = 42.0
+attack_interval = 2.35
+phase_thresholds = PackedFloat32Array(0.7, 0.36)
+status_duration_multiplier = 0.2
+reward_id = "matriarch_seed"
+reward_name = "Worldroot Seed"
+reward_color = Color(0.55, 1, 0.28, 1)
+reward_experience = 245
+reward_coins = 62

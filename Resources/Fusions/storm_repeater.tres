@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/storm_repeater.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "storm_repeater"
+display_name = "STORM REPEATER"
+description = "Aether Ripper and Lightning forge a charged arcane rotary cannon."
+priority = 70
+component_spell_ids = PackedStringArray("aether_ripper", "lightning")
+output_spell = ExtResource("2")

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/boss_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "brass_chronarch"
+display_name = "The Brass Chronarch"
+subtitle = "DUELIST BEYOND TIME"
+visual_style = 2
+primary_color = Color(0.92, 0.52, 0.16, 1)
+secondary_color = Color(1, 0.92, 0.48, 1)
+maximum_health = 3100.0
+movement_speed = 112.0
+contact_damage = 34.0
+defense = 31.0
+attack_interval = 2.15
+phase_thresholds = PackedFloat32Array(0.7, 0.38)
+status_duration_multiplier = 0.22
+reward_id = "chronarch_escapement"
+reward_name = "Impossible Escapement"
+reward_color = Color(1, 0.78, 0.25, 1)
+reward_experience = 175
+reward_coins = 48

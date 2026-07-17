@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BossDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/boss_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "ember_colossus"
+display_name = "EMBER COLOSSUS"
+subtitle = "The Furnace Unbound"
+visual_style = 0
+primary_color = Color(0.95, 0.18, 0.06, 1)
+secondary_color = Color(1, 0.74, 0.14, 1)
+maximum_health = 1450.0
+movement_speed = 72.0
+contact_damage = 28.0
+defense = 18.0
+attack_interval = 2.7
+reward_id = "heart_of_cinders"
+reward_name = "Heart of Cinders"
+reward_color = Color(1, 0.32, 0.08, 1)
+reward_experience = 110
+reward_coins = 32

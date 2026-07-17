@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/OuroborosRound.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "ouroboros_round"
+display_name = "Ouroboros Round"
+description = "A crescent bullet pierces outward, turns at maximum range, and hunts back to the wielder for a stronger second pass."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(0.66, 0.34, 1, 1)
+secondary_color = Color(0.36, 1, 0.82, 1)
+unlocked_by_default = false
+unlock_cost = 2400
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 153.0
+cooldown = 0.95
+cast_range = 880.0
+speed = 1150.0
+knockback_force = 150.0
+pierce_count = 20
+sound_pitch_hz = 690.0
+sound_duration = 0.14

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/GravityWellRound.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "event_horizon_round"
+display_name = "Event Horizon Round"
+description = "Deploys a miniature singularity on impact that repeatedly crushes everything inside its pulsing gravity field."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(0.42, 0.08, 0.82, 1)
+secondary_color = Color(0.2, 0.9, 1, 1)
+unlocked_by_default = false
+unlock_cost = 4800
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 195.0
+cooldown = 2.1
+cast_range = 780.0
+speed = 720.0
+area_radius = 155.0
+knockback_force = 80.0
+duration = 3.2
+tick_interval = 0.22
+intrinsic_status = "stun"
+intrinsic_status_chance = 0.16
+intrinsic_status_duration = 0.42
+sound_pitch_hz = 105.0
+sound_duration = 0.32

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ClusterRoundSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "bullet_cathedral"
+display_name = "Bullet Cathedral"
+description = "An ornate siege-round sheds paired side bullets while flying, then opens into a twelve-shot forward halo."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(1, 0.72, 0.12, 1)
+secondary_color = Color(1, 0.95, 0.72, 1)
+unlocked_by_default = false
+unlock_cost = 9000
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 221.0
+cooldown = 1.65
+cast_range = 1250.0
+speed = 760.0
+knockback_force = 340.0
+duration = 1.0
+tick_interval = 0.16
+burst_count = 12
+pellets_per_shot = 2
+spread_degrees = 92.0
+impact_delay = 0.68
+intrinsic_status = "burn"
+intrinsic_status_chance = 0.4
+intrinsic_status_duration = 3.0
+intrinsic_status_damage = 19.0
+sound_pitch_hz = 145.0
+sound_duration = 0.3

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "faster_projectiles"
+display_name = "Velocity Runes"
+description = "+{value}% projectile speed"
+effect_type = 2
+magnitude = 0.2
+maximum_stacks = 6
+accent_color = Color(0.42, 0.91, 1, 1)

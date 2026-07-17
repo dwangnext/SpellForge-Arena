@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/achievement_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "seasoned_wizard"
+display_name = "Seasoned Wizard"
+description = "Reach level 15 in a run."
+statistic_key = "highest_level"
+required_value = 15
+coin_reward = 80

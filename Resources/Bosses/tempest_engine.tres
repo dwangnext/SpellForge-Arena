@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/boss_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "tempest_engine"
+display_name = "Tempest Engine"
+subtitle = "HEART OF THE ENDLESS STORM"
+visual_style = 1
+primary_color = Color(0.18, 0.72, 1, 1)
+secondary_color = Color(0.82, 0.98, 1, 1)
+maximum_health = 5400.0
+movement_speed = 124.0
+contact_damage = 47.0
+defense = 46.0
+attack_interval = 2.05
+phase_thresholds = PackedFloat32Array(0.66, 0.3)
+status_duration_multiplier = 0.16
+reward_id = "tempest_core"
+reward_name = "Perpetual Turbine"
+reward_color = Color(0.3, 0.88, 1, 1)
+reward_experience = 275
+reward_coins = 68

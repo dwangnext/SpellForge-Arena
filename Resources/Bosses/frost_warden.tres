@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BossDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/boss_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "frost_warden"
+display_name = "FROST WARDEN"
+subtitle = "Keeper of the Silent Vault"
+visual_style = 1
+primary_color = Color(0.24, 0.68, 0.98, 1)
+secondary_color = Color(0.86, 0.98, 1, 1)
+maximum_health = 1750.0
+movement_speed = 88.0
+contact_damage = 24.0
+defense = 28.0
+attack_interval = 2.45
+reward_id = "frozen_crown"
+reward_name = "Frozen Crown"
+reward_color = Color(0.42, 0.86, 1, 1)
+reward_experience = 135
+reward_coins = 38

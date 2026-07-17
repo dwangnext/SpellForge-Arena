@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/Fusions/StormRepeaterProjectile.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "storm_repeater"
+display_name = "Storm Repeater"
+description = "A lightning-fed rotary spell that punches charged rounds through clustered enemies."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(0.28, 0.68, 1, 1)
+secondary_color = Color(0.92, 0.98, 1, 1)
+damage = 45.0
+cooldown = 0.18
+cast_range = 1150.0
+speed = 1550.0
+knockback_force = 110.0
+pierce_count = 3
+sound_pitch_hz = 940.0
+sound_duration = 0.08

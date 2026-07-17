@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/orbital_prism.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "fusion_laser_beam_meteor"
+display_name = "ORBITAL PRISM"
+description = "Meteor and Laser Beam forge a spinning orbital laser impact."
+priority = 95
+component_spell_ids = PackedStringArray("meteor", "laser_beam")
+output_spell = ExtResource("2")
+damage_multiplier = 1.2

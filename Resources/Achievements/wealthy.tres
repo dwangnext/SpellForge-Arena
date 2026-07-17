@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/achievement_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "wealthy"
+display_name = "Arcane Investor"
+description = "Collect 1,000 permanent coins."
+statistic_key = "coins_collected"
+required_value = 1000
+coin_reward = 125

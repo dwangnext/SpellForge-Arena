@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/Fusions/StasisMeteor.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "comet_zero"
+display_name = "Comet Zero"
+description = "A frozen celestial impact that leaves the battlefield locked in absolute cold."
+spell_scene = ExtResource("2")
+visual_style = 7
+primary_color = Color(0.26, 0.8, 1, 1)
+secondary_color = Color(0.94, 1, 1, 1)
+damage = 116.0
+cooldown = 6.8
+cast_range = 940.0
+speed = 650.0
+area_radius = 210.0
+knockback_force = 820.0
+impact_delay = 1.15
+intrinsic_status = "stun"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 1.35
+sound_pitch_hz = 115.0
+sound_duration = 0.7

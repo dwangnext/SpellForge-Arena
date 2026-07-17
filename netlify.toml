@@ -1,0 +1,19 @@
+[build]
+  command = "echo 'Using prebuilt SpellForge Arena web export'"
+  publish = "outputs/netlify"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/_api/lobby"
+  to = "/.netlify/functions/lobby"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    X-Content-Type-Options = "nosniff"

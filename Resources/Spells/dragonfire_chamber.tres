@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/RevolverSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "dragonfire_chamber"
+display_name = "Dragonfire Chamber"
+description = "Three incendiary slugs burst on impact and leave targets burning."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(1, 0.16, 0.04, 1)
+secondary_color = Color(1, 0.8, 0.18, 1)
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 85.0
+cooldown = 0.8
+cast_range = 920.0
+speed = 1180.0
+area_radius = 72.0
+knockback_force = 270.0
+intrinsic_status = "burn"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 4.0
+intrinsic_status_damage = 15.0
+burst_count = 3
+burst_interval = 0.14
+spread_degrees = 8.0
+sound_pitch_hz = 205.0
+sound_duration = 0.11

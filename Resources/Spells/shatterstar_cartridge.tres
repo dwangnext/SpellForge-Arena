@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ClusterRoundSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "shatterstar_cartridge"
+display_name = "Shatterstar Cartridge"
+description = "Fires a massive star-round that travels forward, then fractures into nine smaller bullets that continue through the enemy line."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(0.25, 0.86, 1, 1)
+secondary_color = Color(0.94, 1, 1, 1)
+unlocked_by_default = false
+unlock_cost = 2800
+weapon_id = "revolver"
+fusion_eligible = false
+damage = 123.0
+cooldown = 1.35
+cast_range = 1050.0
+speed = 820.0
+knockback_force = 240.0
+burst_count = 9
+spread_degrees = 64.0
+impact_delay = 0.56
+sound_pitch_hz = 330.0
+sound_duration = 0.2

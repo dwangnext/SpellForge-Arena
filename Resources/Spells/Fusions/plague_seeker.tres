@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ProjectileSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "plague_seeker"
+display_name = "Plague Seeker"
+description = "A sentient toxic missile that hunts enemies and spreads a virulent curse."
+spell_scene = ExtResource("2")
+visual_style = 5
+primary_color = Color(0.48, 1, 0.18, 1)
+secondary_color = Color(0.88, 0.5, 1, 1)
+damage = 23.0
+cooldown = 0.7
+cast_range = 1050.0
+speed = 820.0
+knockback_force = 120.0
+homing = true
+homing_strength = 9.0
+sound_pitch_hz = 410.0
+sound_duration = 0.18

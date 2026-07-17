@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "lifesteal"
+display_name = "Soul Siphon"
+description = "Heal for {value}% of each defeated enemy's maximum health"
+effect_type = 12
+magnitude = 0.01
+maximum_stacks = 5
+accent_color = Color(0.9, 0.18, 0.48, 1)

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "increased_damage"
+display_name = "Arcane Force"
+description = "+{value}% spell damage"
+effect_type = 0
+magnitude = 0.18
+maximum_stacks = 8
+accent_color = Color(1, 0.42, 0.32, 1)

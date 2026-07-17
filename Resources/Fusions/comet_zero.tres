@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/comet_zero.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "comet_zero"
+display_name = "COMET ZERO"
+description = "Meteor and Ice Bolt summon a world-freezing comet."
+priority = 80
+component_spell_ids = PackedStringArray("meteor", "ice_bolt")
+output_spell = ExtResource("2")
+granted_status = 1
+status_duration = 3.5

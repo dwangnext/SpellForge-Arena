@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/AetherRipperProjectile.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "cryo_barrage"
+display_name = "Cryo Barrage"
+description = "A rapid stream of crystalline rounds that tracks targets and flash-freezes on contact."
+spell_scene = ExtResource("2")
+visual_style = 8
+primary_color = Color(0.24, 0.9, 1, 1)
+secondary_color = Color(0.94, 1, 1, 1)
+damage = 27.0
+cooldown = 0.16
+cast_range = 1050.0
+speed = 1350.0
+knockback_force = 80.0
+homing = true
+homing_strength = 4.5
+intrinsic_status = "stun"
+intrinsic_status_chance = 0.2
+intrinsic_status_duration = 0.45
+sound_pitch_hz = 1080.0
+sound_duration = 0.07

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/LineSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "annihilation_wave"
+display_name = "Annihilation Wave"
+description = "Unzips reality in a colossal straight line, repeatedly erasing everything caught in the breach."
+spell_scene = ExtResource("2")
+visual_style = 6
+primary_color = Color(0.72, 0.12, 1, 1)
+secondary_color = Color(0.15, 1, 0.86, 1)
+unlocked_by_default = false
+unlock_cost = 12500
+weapon_id = "gauntlet"
+fusion_eligible = false
+damage = 165.0
+cooldown = 2.8
+cast_range = 1350.0
+speed = 0.0
+knockback_force = 130.0
+duration = 0.72
+tick_interval = 0.12
+line_width = 58.0
+sound_pitch_hz = 74.0
+sound_duration = 0.65

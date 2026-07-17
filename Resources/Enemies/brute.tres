@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Enemies/enemy_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+display_name = "Iron Brute"
+color = Color(0.68, 0.31, 0.74, 1)
+maximum_health = 150.0
+movement_speed = 98.0
+contact_damage = 24.0
+defense = 18.0
+visual_scale = 1.28
+experience_value = 14
+coin_drop_chance = 0.7
+coin_value = 2
+spawn_weight = 1.0

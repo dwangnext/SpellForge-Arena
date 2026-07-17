@@ -1,0 +1,34 @@
+[gd_scene load_steps=8 format=3]
+[ext_resource type="Script" path="res://Scripts/Bosses/astral_devourer.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Bosses/astral_devourer.tres" id="2"]
+[ext_resource type="Script" path="res://Scripts/Components/health_component.gd" id="3"]
+[ext_resource type="Script" path="res://Scripts/Combat/hurtbox_component.gd" id="4"]
+[ext_resource type="Script" path="res://Scripts/Status/status_effect_component.gd" id="5"]
+[ext_resource type="Script" path="res://Scripts/Combat/contact_damage_component.gd" id="6"]
+[sub_resource type="CircleShape2D" id="Circle"]
+radius = 52.0
+[node name="AstralDevourer" type="CharacterBody2D" groups=["bosses"]]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1")
+definition = ExtResource("2")
+preferred_distance = 285.0
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Circle")
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3")
+[node name="StatusEffectComponent" type="Node" parent="."]
+script = ExtResource("5")
+[node name="HurtboxComponent" type="Area2D" parent="."]
+collision_layer = 16
+collision_mask = 8
+monitoring = false
+script = ExtResource("4")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
+shape = SubResource("Circle")
+[node name="ContactDamageComponent" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("6")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactDamageComponent"]
+shape = SubResource("Circle")

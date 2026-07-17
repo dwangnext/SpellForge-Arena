@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "homing"
+display_name = "Seeking Runes"
+description = "Projectiles home toward nearby enemies"
+effect_type = 11
+magnitude = 3.0
+maximum_stacks = 4
+accent_color = Color(0.8, 0.52, 1, 1)

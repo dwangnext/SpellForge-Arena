@@ -1,0 +1,342 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://UI/Scripts/hud.gd" id="1_hud"]
+
+[node name="HUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="ScreenFlash" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="ContrastOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.045)
+
+[node name="Vitals" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 26.0
+offset_right = 344.0
+offset_bottom = 186.0
+
+[node name="Margin" type="MarginContainer" parent="Vitals"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Vitals/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Vitals/Margin/VBox"]
+layout_mode = 2
+text = "WIZARD VITALS"
+
+[node name="HealthBar" type="ProgressBar" parent="Vitals/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 22)
+layout_mode = 2
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="Vitals/Margin/VBox/HealthBar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DashRow" type="HBoxContainer" parent="Vitals/Margin/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Vitals/Margin/VBox/DashRow"]
+layout_mode = 2
+text = "DASH  "
+
+[node name="DashBar" type="ProgressBar" parent="Vitals/Margin/VBox/DashRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+show_percentage = false
+
+[node name="LevelRow" type="HBoxContainer" parent="Vitals/Margin/VBox"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="Vitals/Margin/VBox/LevelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "LEVEL 1  "
+
+[node name="ExperienceBar" type="ProgressBar" parent="Vitals/Margin/VBox/LevelRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(205, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+show_percentage = false
+
+[node name="Hint" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 28.0
+offset_top = 672.0
+offset_right = 850.0
+offset_bottom = 694.0
+text = "WASD / ARROWS MOVE   LEFT CLICK FIRE   HOLD RIGHT CLICK MOVE   SPACE DASH   1–6 SELECT"
+theme_override_colors/font_color = Color(0.72, 0.76, 0.9, 1)
+
+[node name="SpellBar" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -575.0
+offset_top = -92.0
+offset_right = 575.0
+offset_bottom = -35.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Rewards" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 62.0
+grow_horizontal = 0
+theme_override_constants/separation = 24
+alignment = 2
+
+[node name="ExperienceLabel" type="Label" parent="Rewards"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.95, 0.82, 1)
+text = "GEMS  0"
+
+[node name="CoinLabel" type="Label" parent="Rewards"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.32, 1)
+text = "COINS  0"
+
+[node name="CheatBar" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -500.0
+offset_top = 76.0
+offset_right = -28.0
+offset_bottom = 156.0
+grow_horizontal = 0
+mouse_filter = 0
+
+[node name="Margin" type="MarginContainer" parent="CheatBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="CheatBar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="HBoxContainer" parent="CheatBar/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="CheatBar/Margin/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.83, 0.28, 1)
+text = "CHEAT BAR"
+
+[node name="CoinsButton" type="Button" parent="CheatBar/Margin/VBox/Header"]
+layout_mode = 2
+text = "+1,000 COINS"
+
+[node name="PointsButton" type="Button" parent="CheatBar/Margin/VBox/Header"]
+layout_mode = 2
+text = "+10 UPGRADE POINTS"
+
+[node name="CheatStatus" type="Label" parent="CheatBar/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.92, 1)
+text = "Redeem code active"
+horizontal_alignment = 2
+
+[node name="FusionLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 92.0
+offset_bottom = 164.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.1, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 28
+text = "SPELL FUSION"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BossPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -330.0
+offset_top = 18.0
+offset_right = 330.0
+offset_bottom = 92.0
+grow_horizontal = 2
+
+[node name="Margin" type="MarginContainer" parent="BossPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="BossPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="HBoxContainer" parent="BossPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="BossNameLabel" type="Label" parent="BossPanel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BOSS NAME"
+
+[node name="BossPhaseLabel" type="Label" parent="BossPanel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "PHASE 1"
+
+[node name="BossHealthBar" type="ProgressBar" parent="BossPanel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(620, 22)
+layout_mode = 2
+show_percentage = false
+
+[node name="BossHealthLabel" type="Label" parent="BossPanel/Margin/VBox/BossHealthBar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "0 / 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RewardNotice" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -80.0
+offset_right = 280.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.04, 0.1, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 30
+text = "BOSS RELIC ACQUIRED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DeathPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -125.0
+offset_right = 180.0
+offset_bottom = 125.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="VBox" type="VBoxContainer" parent="DeathPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="DeathPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "WIZARD FALLEN"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="DeathPanel/VBox"]
+layout_mode = 2
+text = "Restart Run"
+
+[node name="MenuButton" type="Button" parent="DeathPanel/VBox"]
+layout_mode = 2
+text = "Return to Main Menu"
+
+[connection signal="pressed" from="DeathPanel/VBox/RestartButton" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="DeathPanel/VBox/MenuButton" to="." method="_on_menu_pressed"]
+[connection signal="pressed" from="CheatBar/Margin/VBox/Header/CoinsButton" to="." method="_on_cheat_coins_pressed"]
+[connection signal="pressed" from="CheatBar/Margin/VBox/Header/PointsButton" to="." method="_on_cheat_points_pressed"]

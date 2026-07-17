@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Enemies/enemy_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+display_name = "Cinder Scout"
+color = Color(0.86, 0.25, 0.34, 1)
+maximum_health = 60.0
+movement_speed = 172.0
+contact_damage = 12.0
+defense = 3.0
+experience_value = 5
+coin_drop_chance = 0.38
+spawn_weight = 3.3

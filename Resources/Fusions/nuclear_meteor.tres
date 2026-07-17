@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/nuclear_meteor.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "nuclear_meteor"
+display_name = "NUCLEAR METEOR"
+description = "Meteor consumes explosive-area magic and becomes catastrophic."
+priority = 100
+component_spell_ids = PackedStringArray("meteor")
+required_upgrade_tags = PackedStringArray("explosion")
+output_spell = ExtResource("2")
+damage_multiplier = 1.35
+granted_status = 2
+status_damage = 14.0
+status_duration = 5.0

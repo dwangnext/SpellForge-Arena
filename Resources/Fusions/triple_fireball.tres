@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/triple_fireball.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "triple_fireball"
+display_name = "TRIPLE FIREBALL"
+description = "Fireball consumes split magic and erupts in a three-shot fan."
+priority = 110
+component_spell_ids = PackedStringArray("fireball")
+required_upgrade_tags = PackedStringArray("split")
+output_spell = ExtResource("2")
+damage_multiplier = 1.1
+minimum_projectiles = 3

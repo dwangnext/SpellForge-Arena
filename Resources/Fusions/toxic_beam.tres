@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/toxic_beam.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "toxic_beam"
+display_name = "TOXIC BEAM"
+description = "Poison Cloud and Laser Beam combine into a corrosive ray."
+priority = 50
+component_spell_ids = PackedStringArray("poison_cloud", "laser_beam")
+combination_window = 5.0
+output_spell = ExtResource("2")
+damage_multiplier = 1.15
+granted_status = 3
+status_damage = 10.0
+status_duration = 6.0

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ProjectileSpell.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_definition")
+id = "fireball"
+display_name = "Fireball"
+description = "A blazing projectile that explodes on impact."
+spell_scene = ExtResource("2_scene")
+visual_style = 0
+primary_color = Color(1, 0.27, 0.08, 1)
+secondary_color = Color(1, 0.82, 0.25, 1)
+damage = 34.0
+cooldown = 0.8
+cast_range = 780.0
+speed = 620.0
+area_radius = 82.0
+knockback_force = 420.0
+sound_pitch_hz = 210.0
+sound_duration = 0.22

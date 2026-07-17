@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/LineSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "prism_aegis"
+display_name = "Prism Aegis"
+description = "A defensive prism projects a broad cutting beam through everything ahead."
+spell_scene = ExtResource("2")
+visual_style = 6
+primary_color = Color(0.2, 0.95, 1, 1)
+secondary_color = Color(1, 0.38, 0.82, 1)
+damage = 30.0
+cooldown = 2.4
+cast_range = 980.0
+knockback_force = 240.0
+duration = 0.5
+tick_interval = 0.16
+line_width = 48.0
+sound_pitch_hz = 610.0
+sound_duration = 0.42

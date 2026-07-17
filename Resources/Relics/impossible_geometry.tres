@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RelicDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/relic_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "impossible_geometry"
+display_name = "Impossible Geometry"
+description = "Proof of victory over the Void Architect."
+source_boss_id = "void_architect"
+color = Color(0.86, 0.32, 1, 1)

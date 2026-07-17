@@ -1,0 +1,89 @@
+[gd_scene load_steps=44 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Player/player_controller.gd" id="1_player"]
+[ext_resource type="Script" path="res://Scripts/Components/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_caster.gd" id="4_caster"]
+[ext_resource type="Resource" path="res://Resources/Spells/fireball.tres" id="5_fireball"]
+[ext_resource type="Resource" path="res://Resources/Spells/ice_bolt.tres" id="6_ice"]
+[ext_resource type="Resource" path="res://Resources/Spells/lightning.tres" id="7_lightning"]
+[ext_resource type="Resource" path="res://Resources/Spells/magic_missile.tres" id="8_missile"]
+[ext_resource type="Resource" path="res://Resources/Spells/tornado.tres" id="9_tornado"]
+[ext_resource type="Resource" path="res://Resources/Spells/poison_cloud.tres" id="10_poison"]
+[ext_resource type="Resource" path="res://Resources/Spells/laser_beam.tres" id="11_laser"]
+[ext_resource type="Resource" path="res://Resources/Spells/meteor.tres" id="12_meteor"]
+[ext_resource type="Resource" path="res://Resources/Spells/aether_ripper.tres" id="12_rapid"]
+[ext_resource type="Resource" path="res://Resources/Spells/riot_shield.tres" id="12_shield"]
+[ext_resource type="Script" path="res://Scripts/Progression/upgrade_controller.gd" id="13_upgrades"]
+[ext_resource type="Script" path="res://Scripts/Progression/level_progression.gd" id="14_levels"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/increased_damage.tres" id="15_damage"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/faster_cooldown.tres" id="16_cooldown"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/faster_projectiles.tres" id="17_speed"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/larger_area.tres" id="18_area"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/critical_hits.tres" id="19_critical"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/extra_projectiles.tres" id="20_extra"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/bounce.tres" id="21_bounce"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/pierce.tres" id="22_pierce"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/freeze.tres" id="23_freeze"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/burn.tres" id="24_burn"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/poison.tres" id="25_poison"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/homing.tres" id="26_homing"]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_controller.gd" id="27_fusions"]
+[ext_resource type="Resource" path="res://Resources/Fusions/fire_tornado.tres" id="28_fire_tornado"]
+[ext_resource type="Resource" path="res://Resources/Fusions/chain_frost.tres" id="29_chain_frost"]
+[ext_resource type="Resource" path="res://Resources/Fusions/toxic_beam.tres" id="30_toxic_beam"]
+[ext_resource type="Resource" path="res://Resources/Fusions/nuclear_meteor.tres" id="31_nuclear_meteor"]
+[ext_resource type="Resource" path="res://Resources/Fusions/triple_fireball.tres" id="32_triple_fireball"]
+[ext_resource type="Script" path="res://Scripts/Player/camera_feedback.gd" id="33_camera"]
+[ext_resource type="Resource" path="res://Resources/Fusions/storm_repeater.tres" id="34_storm"]
+[ext_resource type="Resource" path="res://Resources/Fusions/cryo_barrage.tres" id="35_cryo"]
+[ext_resource type="Resource" path="res://Resources/Fusions/plague_seeker.tres" id="36_plague"]
+[ext_resource type="Resource" path="res://Resources/Fusions/plasma_orb.tres" id="37_plasma"]
+[ext_resource type="Resource" path="res://Resources/Fusions/comet_zero.tres" id="38_comet"]
+[ext_resource type="Resource" path="res://Resources/Fusions/ember_bulwark.tres" id="39_ember"]
+[ext_resource type="Resource" path="res://Resources/Fusions/prism_aegis.tres" id="40_prism"]
+[ext_resource type="Resource" path="res://Resources/Upgrades/lifesteal.tres" id="41_lifesteal"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_player"]
+radius = 18.0
+height = 44.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 1
+collision_mask = 6
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("CapsuleShape2D_player")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+maximum_health = 100.0
+
+[node name="SpellCaster" type="Node" parent="."]
+script = ExtResource("4_caster")
+loadout = Array[Resource]([ExtResource("5_fireball"), ExtResource("6_ice"), ExtResource("7_lightning"), ExtResource("8_missile"), ExtResource("9_tornado"), ExtResource("10_poison"), ExtResource("11_laser"), ExtResource("12_meteor"), ExtResource("12_rapid"), ExtResource("12_shield")])
+spell_container_path = NodePath("../..")
+
+[node name="UpgradeController" type="Node" parent="."]
+script = ExtResource("13_upgrades")
+catalog = Array[Resource]([ExtResource("15_damage"), ExtResource("16_cooldown"), ExtResource("17_speed"), ExtResource("18_area"), ExtResource("19_critical"), ExtResource("20_extra"), ExtResource("21_bounce"), ExtResource("22_pierce"), ExtResource("23_freeze"), ExtResource("24_burn"), ExtResource("25_poison"), ExtResource("26_homing"), ExtResource("41_lifesteal")])
+
+[node name="FusionController" type="Node" parent="."]
+script = ExtResource("27_fusions")
+recipes = Array[Resource]([ExtResource("28_fire_tornado"), ExtResource("29_chain_frost"), ExtResource("30_toxic_beam"), ExtResource("31_nuclear_meteor"), ExtResource("32_triple_fireball"), ExtResource("34_storm"), ExtResource("35_cryo"), ExtResource("36_plague"), ExtResource("37_plasma"), ExtResource("38_comet"), ExtResource("39_ember"), ExtResource("40_prism")])
+
+[node name="LevelProgression" type="Node" parent="."]
+script = ExtResource("14_levels")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+ignore_rotation = true
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+drag_left_margin = 0.08
+drag_top_margin = 0.08
+drag_right_margin = 0.08
+drag_bottom_margin = 0.08
+script = ExtResource("33_camera")

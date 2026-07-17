@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/MeteorSpell.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_definition")
+id = "meteor"
+display_name = "Meteor"
+description = "Calls down a delayed impact over a massive area."
+unlocked_by_default = false
+unlock_cost = 100
+spell_scene = ExtResource("2_scene")
+visual_style = 7
+primary_color = Color(1, 0.3, 0.08, 1)
+secondary_color = Color(1, 0.78, 0.22, 1)
+damage = 105.0
+cooldown = 6.0
+cast_range = 760.0
+speed = 480.0
+area_radius = 165.0
+knockback_force = 720.0
+impact_delay = 1.05
+sound_pitch_hz = 280.0
+sound_duration = 0.28

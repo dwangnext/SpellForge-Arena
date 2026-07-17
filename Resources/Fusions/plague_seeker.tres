@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FusionRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Fusions/fusion_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/Spells/Fusions/plague_seeker.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = "plague_seeker"
+display_name = "PLAGUE SEEKER"
+description = "Magic Missile and Poison Cloud create a hunting plague projectile."
+priority = 60
+component_spell_ids = PackedStringArray("magic_missile", "poison_cloud")
+output_spell = ExtResource("2")
+granted_status = 3
+status_damage = 7.0
+status_duration = 5.0

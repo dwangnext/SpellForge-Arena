@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/achievement_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "fusion_scholar"
+display_name = "Fusion Scholar"
+description = "Activate 25 spell fusions."
+statistic_key = "fusions_activated"
+required_value = 25
+coin_reward = 60

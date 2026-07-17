@@ -1,0 +1,34 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://Scenes/Player/Player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://UI/Scenes/HUD.tscn" id="3_hud"]
+[ext_resource type="PackedScene" path="res://UI/Scenes/PauseMenu.tscn" id="4_pause"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/EnemySpawner.tscn" id="5_spawner"]
+[ext_resource type="PackedScene" path="res://UI/Scenes/LevelUpScreen.tscn" id="6_levelup"]
+[ext_resource type="PackedScene" path="res://Scenes/Bosses/BossSpawner.tscn" id="7_boss_spawner"]
+[ext_resource type="PackedScene" path="res://UI/Scenes/MainMenu.tscn" id="8_main_menu"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="ArenaBackdrop" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-2400, -2400, 2400, -2400, 2400, 2400, -2400, 2400)
+color = Color(0.055, 0.066, 0.11, 1)
+z_index = -2
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="EnemySpawner" parent="." instance=ExtResource("5_spawner")]
+
+[node name="BossSpawner" parent="." instance=ExtResource("7_boss_spawner")]
+
+[node name="Interface" type="CanvasLayer" parent="."]
+
+[node name="HUD" parent="Interface" instance=ExtResource("3_hud")]
+
+[node name="PauseMenu" parent="Interface" instance=ExtResource("4_pause")]
+
+[node name="LevelUpScreen" parent="Interface" instance=ExtResource("6_levelup")]
+
+[node name="MainMenu" parent="Interface" instance=ExtResource("8_main_menu")]

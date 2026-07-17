@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/RiotShieldProjectile.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_definition")
+id = "riot_shield"
+display_name = "Riot Shield"
+description = "Projects a crushing arcane shield and reduces incoming damage by 50% while selected."
+unlocked_by_default = false
+unlock_cost = 60
+spell_scene = ExtResource("2_scene")
+visual_style = 9
+primary_color = Color(0.12, 0.78, 0.94, 1)
+secondary_color = Color(0.82, 0.98, 1, 1)
+damage = 24.0
+cooldown = 0.48
+cast_range = 310.0
+speed = 760.0
+knockback_force = 620.0
+pierce_count = 1
+sound_pitch_hz = 190.0
+sound_duration = 0.14

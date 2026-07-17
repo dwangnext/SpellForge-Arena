@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://Scripts/Meta/achievement_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "horde_breaker"
+display_name = "Horde Breaker"
+description = "Defeat 500 enemies."
+statistic_key = "enemies_defeated"
+required_value = 500
+coin_reward = 100
