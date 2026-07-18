@@ -1,24 +1,27 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/ProjectileSpell.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/RiftNeedleSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "rift_needle"
 display_name = "Rift Needle"
-description = "Punches a violet seam through space. The needle seeks targets and pierces an entire enemy column."
+description = "Stitches a line through every enemy in its path, then snaps the seam for a second, much heavier hit and a short stun. Aim through a crowd for maximum value."
 spell_scene = ExtResource("2")
 visual_style = 3
 primary_color = Color(0.62, 0.18, 1, 1)
 secondary_color = Color(0.2, 1, 0.92, 1)
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 92.0
-cooldown = 0.3
+damage = 178.0
+cooldown = 0.72
 cast_range = 1250.0
-speed = 1750.0
-knockback_force = 85.0
-pierce_count = 5
-homing = true
-homing_strength = 5.5
+speed = 0.0
+knockback_force = 18.0
+duration = 0.42
+impact_delay = 0.24
+line_width = 34.0
+intrinsic_status = "stun"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 0.48
 sound_pitch_hz = 840.0
 sound_duration = 0.08

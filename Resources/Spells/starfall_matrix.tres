@@ -5,7 +5,7 @@
 script = ExtResource("1")
 id = "starfall_matrix"
 display_name = "Quantum Exchange"
-description = "Select a target and trade places with it through a neon rift. Bosses resist the swap, so you blink behind them and rupture their space instead."
+description = "Link to the enemy nearest your cursor, rupture it, and safely siphon back 18% of the spell's damage as health. It never teleports you out of the arena."
 spell_scene = ExtResource("2")
 visual_style = 7
 primary_color = Color(0.58, 0.18, 1, 1)

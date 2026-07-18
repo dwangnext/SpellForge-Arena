@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/OuroborosRound.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ParallaxCageSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "phase_saw"
-display_name = "Phase Saw"
-description = "Launches a dimensional crescent that cuts outward, reverses, and carves its way home."
+display_name = "Parallax Cage"
+description = "Four rift walls converge on the aimed area, then snap shut once for heavy damage and a guaranteed stun. Nothing returns like a revolver boomerang."
 spell_scene = ExtResource("2")
 visual_style = 3
 primary_color = Color(0.92, 0.2, 1, 1)
@@ -14,11 +14,16 @@ unlocked_by_default = false
 unlock_cost = 3600
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 184.0
-cooldown = 0.88
-cast_range = 980.0
-speed = 1320.0
-knockback_force = 115.0
-pierce_count = 24
+damage = 455.0
+cooldown = 2.8
+cast_range = 900.0
+speed = 0.0
+area_radius = 185.0
+knockback_force = 20.0
+duration = 0.82
+impact_delay = 0.48
+intrinsic_status = "stun"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 1.05
 sound_pitch_hz = 560.0
 sound_duration = 0.14

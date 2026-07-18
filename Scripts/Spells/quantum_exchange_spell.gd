@@ -5,6 +5,7 @@ var _elapsed := 0.0
 var _origin := Vector2.ZERO
 var _destination := Vector2.ZERO
 var _target_actor: Node2D
+var _successful_exchange := false
 
 
 func activate() -> void:
@@ -13,20 +14,17 @@ func activate() -> void:
 	_target_actor = _find_exchange_target()
 	if not is_instance_valid(_target_actor):
 		_destination = target_position
-		if is_instance_valid(caster):
-			caster.global_position = _destination
-		damage_circle(_destination, get_area_radius(), 0.7)
+		damage_circle(_destination, get_area_radius(), 0.78)
 	else:
 		_destination = _target_actor.global_position
-		var is_boss_target := _target_actor == GameManager.current_boss or bool(_target_actor.get("is_boss"))
-		if is_instance_valid(caster):
-			caster.global_position = _destination - direction * 62.0 if is_boss_target else _destination
-		if not is_boss_target:
-			_target_actor.global_position = _origin
 		var hurtbox := _target_actor.get_node_or_null("HurtboxComponent") as Area2D
 		if hurtbox != null:
-			damage_hurtbox(hurtbox, 1.0, Vector2.ZERO)
-		damage_circle(_destination, get_area_radius(), 0.55)
+			_successful_exchange = damage_hurtbox(hurtbox, 1.0, Vector2.ZERO)
+		if _successful_exchange and is_instance_valid(caster):
+			var health := caster.get_node_or_null("HealthComponent") as HealthComponent
+			if health != null:
+				health.heal(definition.damage * modifiers.damage_multiplier * 0.18)
+		damage_circle(_destination, get_area_radius(), 0.42)
 	CameraEffects.shake(10.0, 0.24)
 	CameraEffects.flash(Color("6fffe9"), 0.18, 0.14)
 	queue_redraw()
@@ -39,7 +37,7 @@ func _find_exchange_target() -> Node2D:
 	if is_instance_valid(GameManager.current_boss):
 		candidates.append(GameManager.current_boss)
 	for candidate in candidates:
-		if not is_instance_valid(candidate):
+		if not is_instance_valid(candidate) or candidate.is_queued_for_deletion():
 			continue
 		var distance := target_position.distance_squared_to(candidate.global_position)
 		if distance < nearest_distance:
@@ -68,3 +66,5 @@ func _draw() -> void:
 		for index in range(4):
 			var angle := _elapsed * 6.0 + TAU * index / 4.0
 			draw_colored_polygon(PackedVector2Array([endpoint + Vector2.RIGHT.rotated(angle) * 22.0, endpoint + Vector2.RIGHT.rotated(angle + 0.22) * 38.0, endpoint + Vector2.RIGHT.rotated(angle - 0.22) * 38.0]), Color(definition.primary_color, fade))
+	if _successful_exchange:
+		draw_string(ThemeDB.fallback_font, local_destination + Vector2(-38, -54), "LIFE SIPHON", HORIZONTAL_ALIGNMENT_CENTER, 76.0, 13, Color(definition.secondary_color, fade))

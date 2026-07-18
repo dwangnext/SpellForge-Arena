@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/GravityWellRound.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/RiftAnchorSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "singularity_palm"
-display_name = "Singularity Palm"
-description = "Throws a compressed gravity seed that blossoms into a crushing black-star field."
+display_name = "Rift Anchor"
+description = "Clamp the enemy nearest your cursor with a dimensional anchor. It deals one heavy hit and locks the victim in place instead of copying a gravity well."
 spell_scene = ExtResource("2")
 visual_style = 3
 primary_color = Color(0.12, 0.02, 0.28, 1)
@@ -14,16 +14,15 @@ unlocked_by_default = false
 unlock_cost = 5200
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 215.0
-cooldown = 1.75
+damage = 365.0
+cooldown = 2.15
 cast_range = 820.0
-speed = 760.0
-area_radius = 175.0
-knockback_force = 65.0
-duration = 3.4
-tick_interval = 0.2
+speed = 0.0
+area_radius = 130.0
+knockback_force = 0.0
+duration = 0.72
 intrinsic_status = "stun"
-intrinsic_status_chance = 0.2
-intrinsic_status_duration = 0.48
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 1.35
 sound_pitch_hz = 92.0
 sound_duration = 0.36
