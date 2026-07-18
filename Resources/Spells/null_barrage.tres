@@ -1,24 +1,27 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/RevolverSpell.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/DragonFlameSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "null_barrage"
-display_name = "Null Barrage"
-description = "The gauntlet tears open seven tiny firing ports and pours void bolts through them."
+display_name = "Dragonflare Rush"
+description = "Become the dragon: breathe a close-range cone of armor-melting fire while surging 38% faster. The flame never knocks enemies away."
 spell_scene = ExtResource("2")
-visual_style = 8
-primary_color = Color(0.3, 1, 0.82, 1)
-secondary_color = Color(0.78, 0.42, 1, 1)
+visual_style = 0
+primary_color = Color(1, 0.18, 0.035, 1)
+secondary_color = Color(1, 0.86, 0.2, 1)
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 62.0
-cooldown = 0.92
-cast_range = 1150.0
-speed = 1550.0
-knockback_force = 72.0
-burst_count = 7
-burst_interval = 0.06
-spread_degrees = 9.0
-sound_pitch_hz = 690.0
-sound_duration = 0.055
+damage = 31.0
+cooldown = 1.15
+cast_range = 300.0
+speed = 0.0
+knockback_force = 0.0
+duration = 0.72
+tick_interval = 0.1
+intrinsic_status = "burn"
+intrinsic_status_chance = 1.0
+intrinsic_status_duration = 2.0
+intrinsic_status_damage = 18.0
+sound_pitch_hz = 145.0
+sound_duration = 0.48

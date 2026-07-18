@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/ProjectileSpell.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/ChronoLockProjectile.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "chrono_lock"
 display_name = "Chrono Lock"
-description = "A clockwork mote aggressively seeks a target and arrests its timeline on contact."
+description = "Tags an enemy with three spinning clock-runes. For two seconds they cross-zap the target with rapid electric time damage."
 spell_scene = ExtResource("2")
 visual_style = 2
 primary_color = Color(1, 0.82, 0.16, 1)
@@ -14,15 +14,15 @@ unlocked_by_default = false
 unlock_cost = 4400
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 118.0
-cooldown = 0.62
+damage = 142.0
+cooldown = 1.15
 cast_range = 1080.0
 speed = 1050.0
-knockback_force = 140.0
+knockback_force = 0.0
 homing = true
 homing_strength = 11.0
 intrinsic_status = "stun"
 intrinsic_status_chance = 1.0
-intrinsic_status_duration = 1.4
+intrinsic_status_duration = 0.32
 sound_pitch_hz = 1020.0
 sound_duration = 0.12

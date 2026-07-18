@@ -91,13 +91,22 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(130, 46)
 layout_mode = 2
 text = "JOIN"
-[node name="PlayerCode" type="Label" parent="Center/MenuPanel"]
+[node name="PlayerCodeRow" type="HBoxContainer" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="PlayerCode" type="Label" parent="Center/MenuPanel/PlayerCodeRow"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.55, 0.72, 1, 1)
 theme_override_font_sizes/font_size = 14
 text = "YOUR PLAYER CODE: ------"
-horizontal_alignment = 1
+vertical_alignment = 1
+[node name="ExistingPlayerButton" type="Button" parent="Center/MenuPanel/PlayerCodeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(225, 36)
+layout_mode = 2
+text = "ADD EXISTING PLAYER CODE"
 [node name="SettingsButton" type="Button" parent="Center/MenuPanel"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
@@ -542,6 +551,46 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "BACK"
+[node name="PlayerCodePanel" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(620, 420)
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+[node name="Title" type="Label" parent="Center/PlayerCodePanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.95, 0.88, 1)
+theme_override_font_sizes/font_size = 36
+text = "ADD EXISTING PLAYER CODE"
+horizontal_alignment = 1
+[node name="Hint" type="Label" parent="Center/PlayerCodePanel"]
+layout_mode = 2
+text = "Restore a six-digit player identity on this device."
+horizontal_alignment = 1
+[node name="ExistingPlayerCode" type="LineEdit" parent="Center/PlayerCodePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+placeholder_text = "6-DIGIT PLAYER CODE"
+max_length = 6
+alignment = 1
+[node name="SubmitButton" type="Button" parent="Center/PlayerCodePanel"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "ADD PLAYER CODE"
+[node name="PlayerCodeStatus" type="Label" parent="Center/PlayerCodePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "Enter your six-digit player code to restore it on this device."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+[node name="BackButton" type="Button" parent="Center/PlayerCodePanel"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "BACK"
 [node name="BackButton" type="Button" parent="Center/SettingsPanel"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -555,6 +604,7 @@ text = "BACK"
 [connection signal="pressed" from="Center/MenuPanel/AbilitiesButton" to="." method="_on_abilities_pressed"]
 [connection signal="pressed" from="Center/MenuPanel/FusionsButton" to="." method="_on_fusions_pressed"]
 [connection signal="pressed" from="Center/MenuPanel/RedeemButton" to="." method="_on_redeem_pressed"]
+[connection signal="pressed" from="Center/MenuPanel/PlayerCodeRow/ExistingPlayerButton" to="." method="_on_existing_player_pressed"]
 [connection signal="pressed" from="Center/MenuPanel/QuitButton" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="Center/LobbyPanel/LobbyStartButton" to="." method="_on_lobby_start_pressed"]
 [connection signal="pressed" from="Center/LobbyPanel/BackButton" to="." method="_on_lobby_back_pressed"]
@@ -572,3 +622,6 @@ text = "BACK"
 [connection signal="text_submitted" from="Center/RedeemPanel/RedeemCode" to="." method="_on_redeem_submit_pressed"]
 [connection signal="pressed" from="Center/RedeemPanel/SubmitButton" to="." method="_on_redeem_submit_pressed"]
 [connection signal="pressed" from="Center/RedeemPanel/BackButton" to="." method="_on_redeem_back_pressed"]
+[connection signal="text_submitted" from="Center/PlayerCodePanel/ExistingPlayerCode" to="." method="_on_existing_player_submit_pressed"]
+[connection signal="pressed" from="Center/PlayerCodePanel/SubmitButton" to="." method="_on_existing_player_submit_pressed"]
+[connection signal="pressed" from="Center/PlayerCodePanel/BackButton" to="." method="_on_existing_player_back_pressed"]

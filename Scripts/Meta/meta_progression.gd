@@ -13,7 +13,7 @@ const WEAPON_IDS: Array[String] = ["wand", "revolver", "gauntlet"]
 const WEAPON_DATA := {
 	"wand": {"name": "Spellforge Wand", "cost": 0, "power": 3, "description": "Flexible elements, area control, and fusion spells"},
 	"revolver": {"name": "Arcane Revolver", "cost": 10000, "power": 4, "description": "Rapid salvos, rail rounds, and stunning ammunition"},
-	"gauntlet": {"name": "Rift Gauntlet", "cost": 18000, "power": 5, "description": "Singularities, phase weapons, and reality-breaking barrages"},
+	"gauntlet": {"name": "Rift Gauntlet", "cost": 18000, "power": 5, "description": "Dragonfire, time traps, teleport slashes, and singularities"},
 }
 
 var meta_coins := 0
@@ -244,6 +244,15 @@ func unlock_everything() -> void:
 	for recipe in fusion_recipes:
 		unlocked_fusions[recipe.id] = true
 	_commit_change()
+
+
+func set_player_code(code: String) -> bool:
+	var cleaned := code.strip_edges()
+	if cleaned.length() != 6 or not cleaned.is_valid_int():
+		return false
+	player_code = cleaned
+	_commit_change()
+	return true
 
 
 func get_fusion_cost(recipe: FusionRecipe) -> int:

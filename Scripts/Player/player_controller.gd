@@ -25,6 +25,8 @@ var _controls_enabled := true
 var _animation_time := 0.0
 var _riot_shield_active := false
 var _weapon_id := "wand"
+var _temporary_speed_multiplier := 1.0
+var _speed_boost_remaining := 0.0
 
 
 func _ready() -> void:
@@ -51,6 +53,7 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
 	_animation_time += delta
+	_update_temporary_speed(delta)
 	queue_redraw()
 	_update_aim()
 	_update_dash_cooldown(delta)
@@ -74,7 +77,7 @@ func _update_aim() -> void:
 
 func _process_movement(delta: float) -> void:
 	var input_direction := InputManager.get_movement_vector()
-	var target_speed := maximum_speed
+	var target_speed := maximum_speed * _temporary_speed_multiplier
 	if input_direction.length_squared() <= 0.0 and InputManager.is_cursor_move_pressed():
 		var cursor_offset := InputManager.get_aim_position(get_viewport()) - global_position
 		if cursor_offset.length() > 12.0:
@@ -86,6 +89,20 @@ func _process_movement(delta: float) -> void:
 		velocity = velocity.move_toward(target_velocity, acceleration * delta)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, deceleration * delta)
+
+
+func grant_temporary_speed(multiplier: float, duration: float) -> void:
+	_temporary_speed_multiplier = maxf(_temporary_speed_multiplier, maxf(multiplier, 1.0))
+	_speed_boost_remaining = maxf(_speed_boost_remaining, duration)
+
+
+func _update_temporary_speed(delta: float) -> void:
+	if _speed_boost_remaining <= 0.0:
+		_temporary_speed_multiplier = 1.0
+		return
+	_speed_boost_remaining = maxf(_speed_boost_remaining - delta, 0.0)
+	if _speed_boost_remaining <= 0.0:
+		_temporary_speed_multiplier = 1.0
 
 
 func _try_start_dash() -> void:

@@ -21,6 +21,9 @@ extends Control
 @onready var redeem_panel: VBoxContainer = %RedeemPanel
 @onready var redeem_code: LineEdit = %RedeemCode
 @onready var redeem_status: Label = %RedeemStatus
+@onready var player_code_panel: VBoxContainer = %PlayerCodePanel
+@onready var existing_player_code: LineEdit = %ExistingPlayerCode
+@onready var player_code_status: Label = %PlayerCodeStatus
 @onready var weapon_panel: VBoxContainer = %WeaponPanel
 @onready var weapon_status: Label = %WeaponStatus
 @onready var equip_subtitle: Label = %EquipSubtitle
@@ -242,7 +245,7 @@ func _on_fusions_back_pressed() -> void:
 
 
 func _show_only(active_panel: Control) -> void:
-	for panel in [menu_panel, settings_panel, ability_panel, fusion_panel, equip_panel, redeem_panel, weapon_panel, lobby_panel]:
+	for panel in [menu_panel, settings_panel, ability_panel, fusion_panel, equip_panel, redeem_panel, player_code_panel, weapon_panel, lobby_panel]:
 		panel.visible = panel == active_panel
 
 
@@ -277,6 +280,37 @@ func _on_redeem_submit_pressed(_submitted_text := "") -> void:
 func _on_redeem_back_pressed() -> void:
 	_show_only(menu_panel)
 	%RedeemButton.grab_focus()
+
+
+func _on_existing_player_pressed() -> void:
+	_show_only(player_code_panel)
+	existing_player_code.clear()
+	player_code_status.text = "Enter your six-digit player code to restore it on this device."
+	player_code_status.remove_theme_color_override("font_color")
+	existing_player_code.grab_focus()
+
+
+func _on_existing_player_submit_pressed(_submitted_text := "") -> void:
+	var entered := existing_player_code.text.strip_edges()
+	if entered == "6189":
+		MetaProgression.unlock_everything()
+		_refresh_weapon_labels()
+		_refresh_ability_shop()
+		player_code_status.text = "MASTER ARSENAL RESTORED — every weapon, ability, and fusion is unlocked."
+		player_code_status.add_theme_color_override("font_color", Color("ffd447"))
+	elif MetaProgression.set_player_code(entered):
+		player_code_label.text = "YOUR PLAYER CODE: %s" % MetaProgression.player_code
+		player_code_status.text = "PLAYER CODE ADDED TO THIS DEVICE."
+		player_code_status.add_theme_color_override("font_color", Color("7fffe5"))
+	else:
+		player_code_status.text = "Use a valid six-digit player code."
+		player_code_status.add_theme_color_override("font_color", Color("ff5d72"))
+	existing_player_code.clear()
+
+
+func _on_existing_player_back_pressed() -> void:
+	_show_only(menu_panel)
+	%ExistingPlayerButton.grab_focus()
 
 
 func _refresh_equip_screen() -> void:

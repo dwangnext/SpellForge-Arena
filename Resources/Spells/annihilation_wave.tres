@@ -5,7 +5,7 @@
 script = ExtResource("1")
 id = "annihilation_wave"
 display_name = "Annihilation Wave"
-description = "Unzips reality in a colossal straight line, repeatedly erasing everything caught in the breach."
+description = "Unzips reality into a colossal straight scar. Targets inside are steadily erased until the breach seals."
 spell_scene = ExtResource("2")
 visual_style = 6
 primary_color = Color(0.72, 0.12, 1, 1)

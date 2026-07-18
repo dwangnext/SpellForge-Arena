@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/ClusterRoundSpell.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/RiftStepSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "prism_collapse"
-display_name = "Prism Collapse"
-description = "A bright rift crystal crosses the arena, then collapses into eleven seeking fragments."
+display_name = "Mirrorstep Sever"
+description = "Fold through the arena in one violet flash, cutting every target along the path and leaving a luminous dimensional scar."
 spell_scene = ExtResource("2")
 visual_style = 3
 primary_color = Color(0.15, 0.9, 1, 1)
@@ -14,13 +14,12 @@ unlocked_by_default = false
 unlock_cost = 7200
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 205.0
-cooldown = 1.45
-cast_range = 1200.0
-speed = 900.0
-knockback_force = 225.0
-burst_count = 11
-spread_degrees = 78.0
-impact_delay = 0.62
-sound_pitch_hz = 410.0
-sound_duration = 0.24
+damage = 310.0
+cooldown = 1.8
+cast_range = 380.0
+speed = 0.0
+knockback_force = 65.0
+duration = 0.3
+line_width = 76.0
+sound_pitch_hz = 760.0
+sound_duration = 0.22
