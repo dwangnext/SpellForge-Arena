@@ -10,6 +10,9 @@ const SIGNAL_POLL_INTERVAL := 0.28
 const STATUS_POLL_INTERVAL := 0.75
 const PLAYER_STATE_INTERVAL := 0.05
 const HTTP_SYNC_INTERVAL := 0.15
+const WEBSOCKET_SYNC_INTERVAL := 0.1
+# Filled in after the first Cloudflare deployment prints its workers.dev URL.
+const CLOUDFLARE_WORKER_URL := ""
 const BOSS_HAZARD_SCENE := preload("res://Scenes/Hazards/BossHazard.tscn")
 const BOSS_PROJECTILE_SCENE := preload("res://Scenes/Hazards/BossProjectile.tscn")
 const STUN_CONFIGURATION := {
@@ -20,6 +23,7 @@ var join_code := ""
 var local_peer_id := 0
 var is_host := false
 var _host_token := ""
+var _peer_token := ""
 var members: Array = []
 var game_started := false
 
@@ -39,6 +43,10 @@ var _http_cast_sequence := 0
 var _pending_http_casts: Array[Dictionary] = []
 var _sync_cast_ids_in_flight: Array[String] = []
 var _seen_http_cast_ids: Dictionary = {}
+var _socket := WebSocketPeer.new()
+var _socket_was_open := false
+var _socket_reconnect_remaining := 0.0
+var _cloudflare_status_requested := false
 var _action_kind := ""
 var _action_request: HTTPRequest
 var _poll_request: HTTPRequest
@@ -113,11 +121,15 @@ func get_enemy_health_multiplier() -> float:
 
 
 func request_lobby_refresh() -> void:
+	_cloudflare_status_requested = true
 	_status_elapsed = STATUS_POLL_INTERVAL
 
 
 func _process(delta: float) -> void:
 	if not is_in_lobby():
+		return
+	if _uses_cloudflare():
+		_process_cloudflare_socket(delta)
 		return
 	_poll_elapsed += delta
 	_status_elapsed += delta
@@ -140,6 +152,36 @@ func _process(delta: float) -> void:
 	if game_started and _sync_elapsed >= HTTP_SYNC_INTERVAL and _sync_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
 		_sync_elapsed = 0.0
 		_send_http_sync()
+
+
+func _process_cloudflare_socket(delta: float) -> void:
+	_socket.poll()
+	var socket_state := _socket.get_ready_state()
+	if socket_state == WebSocketPeer.STATE_OPEN:
+		if not _socket_was_open:
+			_socket_was_open = true
+			connection_status_changed.emit("Real-time co-op connected.", false)
+		while _socket.get_available_packet_count() > 0:
+			_handle_socket_message(_socket.get_packet().get_string_from_utf8())
+		_sync_elapsed += delta
+		if game_started and _sync_elapsed >= WEBSOCKET_SYNC_INTERVAL:
+			_sync_elapsed = 0.0
+			_send_socket_sync()
+	elif socket_state == WebSocketPeer.STATE_CLOSED:
+		if _socket_was_open:
+			_socket_was_open = false
+			connection_status_changed.emit("Co-op connection interrupted. Reconnecting…", true)
+		_socket_reconnect_remaining -= delta
+		if _socket_reconnect_remaining <= 0.0:
+			_socket_reconnect_remaining = 1.5
+			_connect_cloudflare_socket()
+	if _cloudflare_status_requested and _status_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+		_cloudflare_status_requested = false
+		var status_parameters := {"action": "status", "code": join_code}
+		if is_host and GameManager.owner_access_enabled:
+			status_parameters["owner_code"] = "609618"
+			status_parameters["host_token"] = _host_token
+		_http_get(_status_request, status_parameters)
 
 
 func _initialize_host() -> void:
@@ -220,7 +262,7 @@ func _on_signal_sent(_result: int, response_code: int, _headers: PackedStringArr
 func _on_action_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	var response := _parse_response(response_code, body)
 	if response.is_empty():
-		connection_status_changed.emit("Lobby service did not respond. Try again after the Netlify deploy finishes.", true)
+		connection_status_changed.emit("Lobby service did not respond. Check that the multiplayer server finished deploying.", true)
 		return
 	if not bool(response.get("ok", false)):
 		connection_status_changed.emit(String(response.get("error", "Lobby request failed.")), true)
@@ -229,18 +271,26 @@ func _on_action_completed(_result: int, response_code: int, _headers: PackedStri
 		"create":
 			join_code = String(response.get("code", ""))
 			_host_token = String(response.get("host_token", ""))
+			_peer_token = String(response.get("peer_token", ""))
 			local_peer_id = 1
 			is_host = true
 			members = response.get("members", []) as Array
-			_initialize_host()
+			if _uses_cloudflare():
+				_connect_cloudflare_socket()
+			else:
+				_initialize_host()
 			connection_status_changed.emit("Lobby ready. Share code %s." % join_code, false)
 			lobby_state_changed.emit(members, join_code)
 		"join":
 			join_code = String(response.get("code", ""))
 			local_peer_id = int(response.get("peer_id", 0))
+			_peer_token = String(response.get("peer_token", ""))
 			is_host = false
 			members = response.get("members", []) as Array
-			_initialize_client()
+			if _uses_cloudflare():
+				_connect_cloudflare_socket()
+			else:
+				_initialize_client()
 			connection_status_changed.emit("Joined lobby %s. Waiting for the host." % join_code, false)
 			lobby_state_changed.emit(members, join_code)
 		"start":
@@ -421,12 +471,12 @@ func is_world_authority() -> bool:
 	return not is_in_lobby() or is_host
 
 
-func _send_http_sync() -> void:
+func _capture_player_state() -> Dictionary:
 	var player := GameManager.player
 	if not is_instance_valid(player):
-		return
+		return {}
 	var health := player.get_node_or_null("HealthComponent") as HealthComponent
-	var player_state := {
+	return {
 		"x": player.global_position.x,
 		"y": player.global_position.y,
 		"rotation": player.global_rotation,
@@ -435,6 +485,99 @@ func _send_http_sync() -> void:
 		"weapon_id": MetaProgression.selected_weapon_id,
 		"maximum_health": health.maximum_health if health != null else 100.0,
 	}
+
+
+func _send_socket_sync() -> void:
+	if _socket.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		return
+	var player_state := _capture_player_state()
+	if player_state.is_empty():
+		return
+	var payload := {
+		"type": "sync",
+		"state": player_state,
+		"casts": _pending_http_casts.duplicate(true),
+	}
+	if is_host:
+		payload["world"] = _capture_world_snapshot()
+	var error := _socket.send_text(JSON.stringify(payload))
+	if error == OK:
+		_pending_http_casts.clear()
+
+
+func _handle_socket_message(message_text: String) -> void:
+	var parsed = JSON.parse_string(message_text)
+	if not parsed is Dictionary:
+		return
+	var message := parsed as Dictionary
+	match String(message.get("type", "")):
+		"welcome":
+			members = message.get("members", []) as Array
+			lobby_state_changed.emit(members, join_code)
+			if not is_host and message.has("world"):
+				_apply_world_snapshot(message.get("world", {}) as Dictionary)
+			if bool(message.get("started", false)):
+				_mark_game_started()
+		"members":
+			members = message.get("members", []) as Array
+			lobby_state_changed.emit(members, join_code)
+		"started":
+			_mark_game_started()
+		"sync":
+			_apply_socket_sync(message)
+		"closed":
+			connection_status_changed.emit(String(message.get("message", "The lobby closed.")), true)
+			leave_lobby(false)
+
+
+func _apply_socket_sync(message: Dictionary) -> void:
+	var peer_id := int(message.get("peer_id", 0))
+	if peer_id <= 0 or peer_id == local_peer_id:
+		return
+	var state := message.get("state", {}) as Dictionary
+	var avatar := _get_or_create_avatar(peer_id)
+	if avatar != null and not state.is_empty():
+		avatar.apply_network_state(
+			Vector2(float(state.get("x", 0.0)), float(state.get("y", 0.0))),
+			float(state.get("rotation", 0.0)),
+			Vector2(float(state.get("vx", 0.0)), float(state.get("vy", 0.0))),
+			String(state.get("weapon_id", "wand")),
+			float(state.get("maximum_health", 100.0))
+		)
+	for cast_variant in message.get("casts", []):
+		var cast := cast_variant as Dictionary
+		var cast_id := String(cast.get("id", ""))
+		if cast_id.is_empty() or _seen_http_cast_ids.has(cast_id):
+			continue
+		_seen_http_cast_ids[cast_id] = true
+		_spawn_remote_spell(
+			peer_id,
+			String(cast.get("spell_id", "")),
+			Vector2(float(cast.get("ox", 0.0)), float(cast.get("oy", 0.0))),
+			Vector2(float(cast.get("tx", 0.0)), float(cast.get("ty", 0.0))),
+			cast.get("modifiers", {}) as Dictionary
+		)
+	if not is_host and message.has("world"):
+		_apply_world_snapshot(message.get("world", {}) as Dictionary)
+
+
+func _connect_cloudflare_socket() -> void:
+	if not _uses_cloudflare() or join_code.is_empty() or _peer_token.is_empty():
+		return
+	_socket = WebSocketPeer.new()
+	var url := "%s/lobby/%s/ws?peer_id=%d&peer_token=%s" % [
+		CLOUDFLARE_WORKER_URL.trim_suffix("/").replace("https://", "wss://").replace("http://", "ws://"),
+		join_code.uri_encode(), local_peer_id, _peer_token.uri_encode(),
+	]
+	var error := _socket.connect_to_url(url)
+	if error != OK:
+		connection_status_changed.emit("Could not open the real-time co-op connection.", true)
+
+
+func _send_http_sync() -> void:
+	var player_state := _capture_player_state()
+	if player_state.is_empty():
+		return
 	var casts: Array = _pending_http_casts.duplicate(true)
 	_sync_cast_ids_in_flight.clear()
 	for cast_variant in casts:
@@ -664,6 +807,11 @@ func _on_peer_disconnected(peer_id: int) -> void:
 
 
 func _reset_network_state() -> void:
+	if _socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		_socket.close(1000, "Leaving lobby")
+	_socket = WebSocketPeer.new()
+	_socket_was_open = false
+	_socket_reconnect_remaining = 0.0
 	if multiplayer.multiplayer_peer != null:
 		multiplayer.multiplayer_peer.close()
 		multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -680,6 +828,7 @@ func _reset_network_state() -> void:
 	local_peer_id = 0
 	is_host = false
 	_host_token = ""
+	_peer_token = ""
 	members.clear()
 	game_started = false
 	_connections.clear()
@@ -692,6 +841,7 @@ func _reset_network_state() -> void:
 	_pending_http_casts.clear()
 	_sync_cast_ids_in_flight.clear()
 	_seen_http_cast_ids.clear()
+	_cloudflare_status_requested = false
 
 
 func _post(request: HTTPRequest, payload: Dictionary) -> void:
@@ -706,9 +856,15 @@ func _http_get(request: HTTPRequest, parameters: Dictionary) -> void:
 
 
 func _endpoint() -> String:
+	if _uses_cloudflare():
+		return "%s/api/lobby" % CLOUDFLARE_WORKER_URL.trim_suffix("/")
 	if OS.has_feature("web"):
 		return "%s/_api/lobby" % str(JavaScriptBridge.eval("window.location.origin"))
 	return "http://127.0.0.1:8888/_api/lobby"
+
+
+func _uses_cloudflare() -> bool:
+	return CLOUDFLARE_WORKER_URL.begins_with("https://") and not CLOUDFLARE_WORKER_URL.contains("REPLACE")
 
 
 func _parse_response(response_code: int, body: PackedByteArray) -> Dictionary:

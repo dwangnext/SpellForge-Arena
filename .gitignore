@@ -4,4 +4,7 @@ node_modules/
 outputs/*
 !outputs/netlify/
 !outputs/netlify/**
+SpellForge-Arena-Netlify-Source.zip
+SpellForge-Arena-Netlify-Source/
+.wrangler/
 *.import

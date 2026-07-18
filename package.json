@@ -3,7 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "deploy:cloudflare": "wrangler deploy",
+    "check:cloudflare": "wrangler deploy --dry-run"
+  },
   "dependencies": {
     "@netlify/blobs": "10.7.9"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }

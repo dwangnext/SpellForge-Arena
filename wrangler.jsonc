@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "spellforge-arena-multiplayer",
+  "main": "cloudflare/src/worker.js",
+  "compatibility_date": "2026-07-18",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LOBBIES",
+        "class_name": "Lobby"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Lobby"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
