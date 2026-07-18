@@ -39,6 +39,7 @@ func configure_line(world_position: Vector2, angle: float, length: float, width:
 
 
 func _ready() -> void:
+	add_to_group("network_hazards")
 	collision_layer = 64
 	collision_mask = 1
 	monitoring = true

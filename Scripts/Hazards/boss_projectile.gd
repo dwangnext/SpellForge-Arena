@@ -20,6 +20,7 @@ func configure(world_position: Vector2, travel_direction: Vector2, travel_speed:
 
 
 func _ready() -> void:
+	add_to_group("network_projectiles")
 	collision_layer = 64
 	collision_mask = 1
 	body_entered.connect(_on_body_entered)

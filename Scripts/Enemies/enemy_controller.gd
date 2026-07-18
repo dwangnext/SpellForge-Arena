@@ -49,7 +49,10 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.move_toward(Vector2.ZERO, steering_acceleration * 2.0 * delta)
 		move_and_slide()
 		return
-	var to_player := GameManager.player.global_position - global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	if not is_instance_valid(combat_target):
+		return
+	var to_player := combat_target.global_position - global_position
 	var speed_scale := lerpf(1.0, difficulty_multiplier, 0.18)
 	var desired_velocity := to_player.normalized() * definition.movement_speed * speed_scale * status_effects.movement_multiplier
 	velocity = velocity.move_toward(desired_velocity, steering_acceleration * delta)

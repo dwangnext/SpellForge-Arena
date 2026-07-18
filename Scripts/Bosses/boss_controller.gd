@@ -65,7 +65,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_movement(delta: float) -> void:
-	var offset := GameManager.player.global_position - global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	if not is_instance_valid(combat_target):
+		return
+	var offset := combat_target.global_position - global_position
 	var direction_to_player := offset.normalized()
 	var desired_velocity := Vector2.ZERO
 	if offset.length() > preferred_distance:
@@ -122,9 +125,10 @@ func spawn_radial_projectiles(count: int, speed: float, damage: float, radius: f
 
 
 func spawn_fan_projectiles(count: int, spread_degrees: float, speed: float, damage: float, radius: float, color: Color) -> void:
-	if not is_instance_valid(GameManager.player):
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	if not is_instance_valid(combat_target):
 		return
-	var center_angle := global_position.direction_to(GameManager.player.global_position).angle()
+	var center_angle := global_position.direction_to(combat_target.global_position).angle()
 	for index in range(count):
 		var fraction := 0.5 if count == 1 else float(index) / (count - 1)
 		var offset := deg_to_rad(lerpf(-spread_degrees * 0.5, spread_degrees * 0.5, fraction))

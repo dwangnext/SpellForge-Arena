@@ -8,6 +8,8 @@ extends Node2D
 @onready var boss_spawner: Node2D = $BossSpawner
 @onready var arena_backdrop: Polygon2D = $ArenaBackdrop
 
+var _network_spawn_initialized := false
+
 
 func _ready() -> void:
 	SettingsManager.settings_changed.connect(queue_redraw)
@@ -16,15 +18,31 @@ func _ready() -> void:
 
 
 func set_arena_active(is_active: bool) -> void:
+	var controls_world := is_active and NetworkManager.is_world_authority()
 	arena_backdrop.visible = is_active
 	player.visible = is_active
 	enemy_spawner.visible = is_active
 	boss_spawner.visible = is_active
+	enemy_spawner.set_physics_process(controls_world)
+	boss_spawner.set_physics_process(controls_world)
 	hud.visible = is_active
+	if is_active and NetworkManager.is_in_lobby() and not _network_spawn_initialized:
+		_network_spawn_initialized = true
+		player.global_position = Vector2((NetworkManager.local_peer_id - 1) * 72.0, (NetworkManager.local_peer_id - 1) * 28.0)
+	if is_active and not NetworkManager.is_world_authority():
+		_clear_local_world_simulation()
 	if not is_active:
 		pause_menu.hide()
 		level_up_screen.hide()
 	GameManager.set_paused(not is_active)
+
+
+func _clear_local_world_simulation() -> void:
+	for enemy in GameManager.enemies.duplicate():
+		if is_instance_valid(enemy) and not enemy is RemoteWorldActor:
+			enemy.queue_free()
+	if is_instance_valid(GameManager.current_boss):
+		GameManager.current_boss.queue_free()
 
 
 func _unhandled_input(event: InputEvent) -> void:

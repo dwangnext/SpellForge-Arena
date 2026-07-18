@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
 [ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Spells/LineSpell.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/WorldlineGuillotineSpell.tscn" id="2"]
 [resource]
 script = ExtResource("1")
 id = "annihilation_wave"
-display_name = "Annihilation Wave"
-description = "Unzips reality into a colossal straight scar. Targets inside are steadily erased until the breach seals."
+display_name = "Worldline Guillotine"
+description = "Draw one enormous execution seam across the arena. It warns enemies, snaps shut once, and deals all of its damage in a single reality-cutting blow."
 spell_scene = ExtResource("2")
 visual_style = 6
 primary_color = Color(0.72, 0.12, 1, 1)
@@ -14,13 +14,13 @@ unlocked_by_default = false
 unlock_cost = 12500
 weapon_id = "gauntlet"
 fusion_eligible = false
-damage = 165.0
-cooldown = 2.8
+damage = 680.0
+cooldown = 4.2
 cast_range = 1350.0
 speed = 0.0
-knockback_force = 130.0
-duration = 0.72
-tick_interval = 0.12
-line_width = 58.0
+knockback_force = 85.0
+duration = 0.95
+impact_delay = 0.68
+line_width = 72.0
 sound_pitch_hz = 74.0
 sound_duration = 0.65

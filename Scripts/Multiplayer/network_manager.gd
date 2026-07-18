@@ -9,6 +9,9 @@ const MAX_PLAYERS := 3
 const SIGNAL_POLL_INTERVAL := 0.28
 const STATUS_POLL_INTERVAL := 0.75
 const PLAYER_STATE_INTERVAL := 0.05
+const HTTP_SYNC_INTERVAL := 0.15
+const BOSS_HAZARD_SCENE := preload("res://Scenes/Hazards/BossHazard.tscn")
+const BOSS_PROJECTILE_SCENE := preload("res://Scenes/Hazards/BossProjectile.tscn")
 const STUN_CONFIGURATION := {
 	"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
 }
@@ -23,16 +26,25 @@ var game_started := false
 var _webrtc_multiplayer: WebRTCMultiplayerPeer
 var _connections: Dictionary = {}
 var _remote_avatars: Dictionary = {}
+var _remote_world_actors: Dictionary = {}
+var _remote_hazards: Dictionary = {}
+var _remote_projectiles: Dictionary = {}
 var _seen_signal_ids: Dictionary = {}
 var _signal_outbox: Array[Dictionary] = []
 var _poll_elapsed := 0.0
 var _status_elapsed := 0.0
 var _state_elapsed := 0.0
+var _sync_elapsed := 0.0
+var _http_cast_sequence := 0
+var _pending_http_casts: Array[Dictionary] = []
+var _sync_cast_ids_in_flight: Array[String] = []
+var _seen_http_cast_ids: Dictionary = {}
 var _action_kind := ""
 var _action_request: HTTPRequest
 var _poll_request: HTTPRequest
 var _status_request: HTTPRequest
 var _signal_request: HTTPRequest
+var _sync_request: HTTPRequest
 
 
 func _ready() -> void:
@@ -41,6 +53,7 @@ func _ready() -> void:
 	_poll_request = _make_request(_on_poll_completed)
 	_status_request = _make_request(_on_status_completed)
 	_signal_request = _make_request(_on_signal_sent)
+	_sync_request = _make_request(_on_sync_completed)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 
 
@@ -109,6 +122,7 @@ func _process(delta: float) -> void:
 	_poll_elapsed += delta
 	_status_elapsed += delta
 	_state_elapsed += delta
+	_sync_elapsed += delta
 	if _poll_elapsed >= SIGNAL_POLL_INTERVAL and _poll_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
 		_poll_elapsed = 0.0
 		_http_get(_poll_request, {"action": "poll", "code": join_code, "peer_id": local_peer_id})
@@ -123,6 +137,9 @@ func _process(delta: float) -> void:
 	if game_started and _state_elapsed >= PLAYER_STATE_INTERVAL:
 		_state_elapsed = 0.0
 		_broadcast_local_player_state()
+	if game_started and _sync_elapsed >= HTTP_SYNC_INTERVAL and _sync_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+		_sync_elapsed = 0.0
+		_send_http_sync()
 
 
 func _initialize_host() -> void:
@@ -275,6 +292,7 @@ func _mark_game_started() -> void:
 	game_started = true
 	connection_status_changed.emit("The host started the run.", false)
 	game_start_requested.emit()
+	_sync_elapsed = HTTP_SYNC_INTERVAL
 
 
 func _broadcast_local_player_state() -> void:
@@ -295,31 +313,322 @@ func _receive_player_state(peer_id: int, position: Vector2, facing: float, veloc
 		avatar.apply_network_state(position, facing, velocity, weapon_id)
 
 
-func broadcast_spell_cast(spell_id: String, origin: Vector2, target: Vector2) -> void:
-	if not game_started or multiplayer.multiplayer_peer == null or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+func broadcast_spell_cast(spell_id: String, origin: Vector2, target: Vector2, modifiers: SpellModifiers = null) -> void:
+	if not game_started or not is_in_lobby():
 		return
-	_receive_spell_cast.rpc(local_peer_id, spell_id, origin, target)
+	_http_cast_sequence += 1
+	_pending_http_casts.append({
+		"id": "%d-%d-%d" % [Time.get_unix_time_from_system(), local_peer_id, _http_cast_sequence],
+		"spell_id": spell_id,
+		"ox": origin.x,
+		"oy": origin.y,
+		"tx": target.x,
+		"ty": target.y,
+		"modifiers": _modifiers_to_dictionary(modifiers),
+	})
+	if _pending_http_casts.size() > 16:
+		_pending_http_casts.pop_front()
 
 
 @rpc("any_peer", "call_remote", "reliable")
 func _receive_spell_cast(peer_id: int, spell_id: String, origin: Vector2, target: Vector2) -> void:
 	if multiplayer.get_remote_sender_id() != peer_id:
 		return
+	_spawn_remote_spell(peer_id, spell_id, origin, target)
+
+
+func _spawn_remote_spell(peer_id: int, spell_id: String, origin: Vector2, target: Vector2, modifier_data: Dictionary = {}) -> void:
 	var definition := MetaProgression.find_spell_definition(spell_id)
 	var avatar := _get_or_create_avatar(peer_id)
 	var scene := get_tree().current_scene
 	if definition == null or definition.spell_scene == null or avatar == null or scene == null:
 		return
-	var spell := definition.spell_scene.instantiate() as Spell
-	if spell == null:
+	var first_spell := definition.spell_scene.instantiate() as Spell
+	if first_spell == null:
 		return
-	var modifiers := SpellModifiers.new()
-	if MetaProgression.is_fusion_spell_id(definition.id):
+	var modifiers := _modifiers_from_dictionary(modifier_data)
+	if modifier_data.is_empty() and MetaProgression.is_fusion_spell_id(definition.id):
 		modifiers.damage_multiplier *= MetaProgression.get_fusion_damage_multiplier(definition.id)
-	spell.configure(definition, avatar, origin, target, modifiers)
-	spell.sound_enabled = true
-	scene.add_child(spell)
-	spell.activate()
+	var projectile_count := maxi(1 + modifiers.extra_projectiles, 1) if first_spell.supports_projectile_modifiers() else 1
+	for projectile_index in range(projectile_count):
+		var spell := first_spell if projectile_index == 0 else definition.spell_scene.instantiate() as Spell
+		if spell == null:
+			continue
+		var spread := deg_to_rad(8.0) * (projectile_index - (projectile_count - 1) * 0.5)
+		var offset_target := origin + (target - origin).rotated(spread)
+		spell.configure(definition, avatar, origin, offset_target, modifiers)
+		spell.sound_enabled = projectile_index == 0
+		scene.add_child(spell)
+		spell.activate()
+
+
+func _modifiers_to_dictionary(modifiers: SpellModifiers) -> Dictionary:
+	if modifiers == null:
+		return {}
+	return {
+		"damage": modifiers.damage_multiplier, "speed": modifiers.projectile_speed_multiplier,
+		"area": modifiers.area_multiplier, "critical_chance": modifiers.critical_chance,
+		"critical_multiplier": modifiers.critical_multiplier, "extra": modifiers.extra_projectiles,
+		"bounce": modifiers.bounce_count, "pierce": modifiers.pierce_bonus,
+		"freeze_chance": modifiers.freeze_chance, "freeze_duration": modifiers.freeze_duration,
+		"burn_chance": modifiers.burn_chance, "burn_damage": modifiers.burn_damage, "burn_duration": modifiers.burn_duration,
+		"poison_chance": modifiers.poison_chance, "poison_damage": modifiers.poison_damage, "poison_duration": modifiers.poison_duration,
+		"homing": modifiers.homing_enabled, "homing_bonus": modifiers.homing_strength_bonus,
+	}
+
+
+func _modifiers_from_dictionary(data: Dictionary) -> SpellModifiers:
+	var modifiers := SpellModifiers.new()
+	if data.is_empty():
+		return modifiers
+	modifiers.damage_multiplier = clampf(float(data.get("damage", 1.0)), 0.1, 20.0)
+	modifiers.projectile_speed_multiplier = clampf(float(data.get("speed", 1.0)), 0.1, 10.0)
+	modifiers.area_multiplier = clampf(float(data.get("area", 1.0)), 0.1, 10.0)
+	modifiers.critical_chance = clampf(float(data.get("critical_chance", 0.0)), 0.0, 1.0)
+	modifiers.critical_multiplier = clampf(float(data.get("critical_multiplier", 2.0)), 1.0, 10.0)
+	modifiers.extra_projectiles = clampi(int(data.get("extra", 0)), 0, 12)
+	modifiers.bounce_count = clampi(int(data.get("bounce", 0)), 0, 20)
+	modifiers.pierce_bonus = clampi(int(data.get("pierce", 0)), 0, 30)
+	modifiers.freeze_chance = clampf(float(data.get("freeze_chance", 0.0)), 0.0, 1.0)
+	modifiers.freeze_duration = clampf(float(data.get("freeze_duration", 0.0)), 0.0, 10.0)
+	modifiers.burn_chance = clampf(float(data.get("burn_chance", 0.0)), 0.0, 1.0)
+	modifiers.burn_damage = clampf(float(data.get("burn_damage", 0.0)), 0.0, 10000.0)
+	modifiers.burn_duration = clampf(float(data.get("burn_duration", 3.0)), 0.0, 20.0)
+	modifiers.poison_chance = clampf(float(data.get("poison_chance", 0.0)), 0.0, 1.0)
+	modifiers.poison_damage = clampf(float(data.get("poison_damage", 0.0)), 0.0, 10000.0)
+	modifiers.poison_duration = clampf(float(data.get("poison_duration", 4.0)), 0.0, 20.0)
+	modifiers.homing_enabled = bool(data.get("homing", false))
+	modifiers.homing_strength_bonus = clampf(float(data.get("homing_bonus", 0.0)), 0.0, 20.0)
+	return modifiers
+
+
+func get_nearest_combat_target(from_position: Vector2) -> Node2D:
+	var nearest := GameManager.player
+	var nearest_distance := from_position.distance_squared_to(nearest.global_position) if is_instance_valid(nearest) else INF
+	if is_host:
+		for avatar_variant in _remote_avatars.values():
+			var avatar := avatar_variant as RemotePlayerAvatar
+			if not is_instance_valid(avatar) or not avatar.is_combat_active():
+				continue
+			var distance := from_position.distance_squared_to(avatar.global_position)
+			if distance < nearest_distance:
+				nearest = avatar
+				nearest_distance = distance
+	return nearest
+
+
+func is_world_authority() -> bool:
+	return not is_in_lobby() or is_host
+
+
+func _send_http_sync() -> void:
+	var player := GameManager.player
+	if not is_instance_valid(player):
+		return
+	var health := player.get_node_or_null("HealthComponent") as HealthComponent
+	var player_state := {
+		"x": player.global_position.x,
+		"y": player.global_position.y,
+		"rotation": player.global_rotation,
+		"vx": player.velocity.x if player is CharacterBody2D else 0.0,
+		"vy": player.velocity.y if player is CharacterBody2D else 0.0,
+		"weapon_id": MetaProgression.selected_weapon_id,
+		"maximum_health": health.maximum_health if health != null else 100.0,
+	}
+	var casts: Array = _pending_http_casts.duplicate(true)
+	_sync_cast_ids_in_flight.clear()
+	for cast_variant in casts:
+		_sync_cast_ids_in_flight.append(String((cast_variant as Dictionary).get("id", "")))
+	var payload := {
+		"action": "sync",
+		"code": join_code,
+		"peer_id": local_peer_id,
+		"state": player_state,
+		"casts": casts,
+	}
+	if is_host:
+		payload["host_token"] = _host_token
+		payload["world"] = _capture_world_snapshot()
+	_post(_sync_request, payload)
+
+
+func _on_sync_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var response := _parse_response(response_code, body)
+	if not bool(response.get("ok", false)):
+		return
+	for index in range(_pending_http_casts.size() - 1, -1, -1):
+		if _sync_cast_ids_in_flight.has(String(_pending_http_casts[index].get("id", ""))):
+			_pending_http_casts.remove_at(index)
+	_sync_cast_ids_in_flight.clear()
+	for state_variant in response.get("players", []):
+		var state := state_variant as Dictionary
+		var peer_id := int(state.get("peer_id", 0))
+		if peer_id <= 0 or peer_id == local_peer_id:
+			continue
+		var avatar := _get_or_create_avatar(peer_id)
+		if avatar != null:
+			avatar.apply_network_state(
+				Vector2(float(state.get("x", 0.0)), float(state.get("y", 0.0))),
+				float(state.get("rotation", 0.0)),
+				Vector2(float(state.get("vx", 0.0)), float(state.get("vy", 0.0))),
+				String(state.get("weapon_id", "wand")),
+				float(state.get("maximum_health", 100.0))
+			)
+	for cast_variant in response.get("casts", []):
+		var cast := cast_variant as Dictionary
+		var cast_id := String(cast.get("id", ""))
+		var peer_id := int(cast.get("peer_id", 0))
+		if cast_id.is_empty() or peer_id == local_peer_id or _seen_http_cast_ids.has(cast_id):
+			continue
+		_seen_http_cast_ids[cast_id] = true
+		_spawn_remote_spell(
+			peer_id,
+			String(cast.get("spell_id", "")),
+			Vector2(float(cast.get("ox", 0.0)), float(cast.get("oy", 0.0))),
+			Vector2(float(cast.get("tx", 0.0)), float(cast.get("ty", 0.0))),
+			cast.get("modifiers", {}) as Dictionary
+		)
+	if not is_host:
+		_apply_world_snapshot(response.get("world", {}) as Dictionary)
+
+
+func _capture_world_snapshot() -> Dictionary:
+	var actors: Array[Dictionary] = []
+	for enemy in GameManager.enemies:
+		if is_instance_valid(enemy) and not enemy is RemoteWorldActor:
+			actors.append(_capture_actor(enemy, false))
+	if is_instance_valid(GameManager.current_boss):
+		actors.append(_capture_actor(GameManager.current_boss, true))
+	var hazards: Array[Dictionary] = []
+	for node in get_tree().get_nodes_in_group("network_hazards"):
+		var hazard := node as BossHazard
+		if hazard == null:
+			continue
+		hazards.append({
+			"id": str(hazard.get_instance_id()), "shape": hazard.shape_type,
+			"x": hazard.global_position.x, "y": hazard.global_position.y, "rotation": hazard.global_rotation,
+			"radius": hazard.radius, "length": hazard.line_length, "width": hazard.line_width,
+			"warning": hazard.warning_duration, "active": hazard.active_duration, "elapsed": hazard._elapsed,
+			"damage": hazard.damage, "color": hazard.accent_color.to_html(false),
+		})
+	var projectiles: Array[Dictionary] = []
+	for node in get_tree().get_nodes_in_group("network_projectiles"):
+		var projectile := node as BossProjectile
+		if projectile == null:
+			continue
+		projectiles.append({
+			"id": str(projectile.get_instance_id()), "x": projectile.global_position.x, "y": projectile.global_position.y,
+			"dx": projectile.direction.x, "dy": projectile.direction.y, "speed": projectile.speed,
+			"damage": projectile.damage, "radius": projectile.radius, "lifetime": projectile.lifetime,
+			"color": projectile.accent_color.to_html(false),
+		})
+	var player_healths := {}
+	var local_health := GameManager.player.get_node_or_null("HealthComponent") as HealthComponent if is_instance_valid(GameManager.player) else null
+	if local_health != null:
+		player_healths[str(local_peer_id)] = {"current": local_health.current_health, "maximum": local_health.maximum_health}
+	for peer_id_variant in _remote_avatars:
+		var avatar := _remote_avatars[peer_id_variant] as RemotePlayerAvatar
+		if is_instance_valid(avatar):
+			player_healths[str(peer_id_variant)] = avatar.get_health_snapshot()
+	return {
+		"actors": actors, "hazards": hazards, "projectiles": projectiles,
+		"player_healths": player_healths, "experience": GameManager.experience, "coins": GameManager.coins,
+	}
+
+
+func _capture_actor(actor: Node2D, is_boss_actor: bool) -> Dictionary:
+	var definition = actor.get("definition")
+	var color := Color("e34c67")
+	var radius := 20.0
+	if definition is EnemyDefinition:
+		color = definition.color
+		radius = 20.0 * definition.visual_scale * actor.scale.x
+	elif definition is BossDefinition:
+		color = definition.primary_color
+		radius = 52.0 * actor.scale.x
+	var health := actor.get_node_or_null("HealthComponent") as HealthComponent
+	var ratio := health.current_health / maxf(health.maximum_health, 1.0) if health != null else 1.0
+	return {
+		"id": ("boss-" if is_boss_actor else "enemy-") + str(actor.get_instance_id()),
+		"x": actor.global_position.x, "y": actor.global_position.y, "rotation": actor.global_rotation,
+		"color": color.to_html(false), "radius": radius, "health": ratio, "boss": is_boss_actor,
+	}
+
+
+func _apply_world_snapshot(world: Dictionary) -> void:
+	if world.is_empty():
+		return
+	var active_actor_ids: Dictionary = {}
+	for actor_variant in world.get("actors", []):
+		var data := actor_variant as Dictionary
+		var actor_id := String(data.get("id", ""))
+		if actor_id.is_empty():
+			continue
+		active_actor_ids[actor_id] = true
+		var actor := _remote_world_actors.get(actor_id) as RemoteWorldActor
+		if not is_instance_valid(actor):
+			actor = RemoteWorldActor.new()
+			actor.network_id = actor_id
+			get_tree().current_scene.add_child(actor)
+			_remote_world_actors[actor_id] = actor
+		actor.apply_snapshot(data)
+	_remove_missing_remote_nodes(_remote_world_actors, active_actor_ids)
+	_apply_remote_hazards(world.get("hazards", []) as Array)
+	_apply_remote_projectiles(world.get("projectiles", []) as Array)
+	var healths := world.get("player_healths", {}) as Dictionary
+	var local_health := healths.get(str(local_peer_id), {}) as Dictionary
+	if not local_health.is_empty() and is_instance_valid(GameManager.player) and GameManager.player.has_method("synchronize_network_health"):
+		GameManager.player.synchronize_network_health(float(local_health.get("current", 100.0)), float(local_health.get("maximum", 100.0)))
+	GameManager.synchronize_shared_rewards(int(world.get("experience", 0)), int(world.get("coins", 0)))
+
+
+func _apply_remote_hazards(snapshots: Array) -> void:
+	var active_ids: Dictionary = {}
+	for snapshot_variant in snapshots:
+		var data := snapshot_variant as Dictionary
+		var network_id := String(data.get("id", ""))
+		active_ids[network_id] = true
+		var hazard := _remote_hazards.get(network_id) as BossHazard
+		if not is_instance_valid(hazard):
+			hazard = BOSS_HAZARD_SCENE.instantiate() as BossHazard
+			if int(data.get("shape", 0)) == BossHazard.ShapeType.CIRCLE:
+				hazard.configure_circle(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), float(data.get("radius", 90.0)), float(data.get("warning", 0.9)), float(data.get("active", 0.3)), float(data.get("damage", 25.0)), Color(String(data.get("color", "ff4455"))))
+			else:
+				hazard.configure_line(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), float(data.get("rotation", 0.0)), float(data.get("length", 600.0)), float(data.get("width", 46.0)), float(data.get("warning", 0.9)), float(data.get("active", 0.3)), float(data.get("damage", 25.0)), Color(String(data.get("color", "ff4455"))))
+			get_tree().current_scene.add_child(hazard)
+			_remote_hazards[network_id] = hazard
+		hazard.global_position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+		hazard.global_rotation = float(data.get("rotation", 0.0))
+		hazard._elapsed = float(data.get("elapsed", 0.0))
+	_remove_missing_remote_nodes(_remote_hazards, active_ids)
+
+
+func _apply_remote_projectiles(snapshots: Array) -> void:
+	var active_ids: Dictionary = {}
+	for snapshot_variant in snapshots:
+		var data := snapshot_variant as Dictionary
+		var network_id := String(data.get("id", ""))
+		active_ids[network_id] = true
+		var projectile := _remote_projectiles.get(network_id) as BossProjectile
+		if not is_instance_valid(projectile):
+			projectile = BOSS_PROJECTILE_SCENE.instantiate() as BossProjectile
+			projectile.configure(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))), float(data.get("speed", 320.0)), float(data.get("damage", 18.0)), float(data.get("radius", 11.0)), Color(String(data.get("color", "ff4455"))), float(data.get("lifetime", 4.0)))
+			get_tree().current_scene.add_child(projectile)
+			_remote_projectiles[network_id] = projectile
+		projectile.global_position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+		projectile.direction = Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))).normalized()
+		projectile.lifetime = float(data.get("lifetime", 1.0))
+	_remove_missing_remote_nodes(_remote_projectiles, active_ids)
+
+
+func _remove_missing_remote_nodes(nodes: Dictionary, active_ids: Dictionary) -> void:
+	for network_id in nodes.keys():
+		if active_ids.has(network_id):
+			continue
+		var node := nodes[network_id] as Node
+		if is_instance_valid(node):
+			node.queue_free()
+		nodes.erase(network_id)
 
 
 func _get_or_create_avatar(peer_id: int) -> RemotePlayerAvatar:
@@ -362,6 +671,11 @@ func _reset_network_state() -> void:
 		var avatar := avatar_variant as RemotePlayerAvatar
 		if is_instance_valid(avatar):
 			avatar.queue_free()
+	for collection in [_remote_world_actors, _remote_hazards, _remote_projectiles]:
+		for node_variant in collection.values():
+			var remote_node := node_variant as Node
+			if is_instance_valid(remote_node):
+				remote_node.queue_free()
 	join_code = ""
 	local_peer_id = 0
 	is_host = false
@@ -370,8 +684,14 @@ func _reset_network_state() -> void:
 	game_started = false
 	_connections.clear()
 	_remote_avatars.clear()
+	_remote_world_actors.clear()
+	_remote_hazards.clear()
+	_remote_projectiles.clear()
 	_seen_signal_ids.clear()
 	_signal_outbox.clear()
+	_pending_http_casts.clear()
+	_sync_cast_ids_in_flight.clear()
+	_seen_http_cast_ids.clear()
 
 
 func _post(request: HTTPRequest, payload: Dictionary) -> void:

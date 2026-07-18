@@ -20,6 +20,13 @@ const cleanCode = (value) => String(value ?? "").toUpperCase().replace(/[^A-Z0-9
 const cleanName = (value, fallback) => String(value ?? fallback).replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 24) || fallback;
 const cleanPlayerCode = (value) => /^\d{6}$/.test(String(value ?? "")) ? String(value) : "------";
 const metaKey = (code) => `lobbies/${code}/meta`;
+const stateKey = (code, peerId) => `runtime/${code}/players/${peerId}`;
+const worldKey = (code) => `runtime/${code}/world`;
+const castPrefix = (code) => `runtime/${code}/casts/`;
+const safeNumber = (value, fallback = 0, limit = 100000) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(-limit, Math.min(limit, parsed)) : fallback;
+};
 const publicMembers = (members, revealCodes = false) => members.map((member) => ({
   peer_id: Number(member.peer_id),
   name: String(member.name),
@@ -114,6 +121,55 @@ async function sendSignal(body) {
   return json({ ok: true, id });
 }
 
+async function syncLobby(body) {
+  const code = cleanCode(body.code);
+  const lobby = await getLobby(code);
+  if (!lobby || !lobby.started) return json({ ok: false, error: "Run is not active." }, 404);
+  const peerId = Number(body.peer_id);
+  if (!lobby.members.some((member) => Number(member.peer_id) === peerId)) {
+    return json({ ok: false, error: "Player is not in this run." }, 403);
+  }
+
+  const state = body.state ?? {};
+  await store.setJSON(stateKey(code, peerId), {
+    peer_id: peerId,
+    x: safeNumber(state.x), y: safeNumber(state.y), rotation: safeNumber(state.rotation, 0, 1000),
+    vx: safeNumber(state.vx, 0, 5000), vy: safeNumber(state.vy, 0, 5000),
+    weapon_id: ["wand", "revolver", "gauntlet"].includes(state.weapon_id) ? state.weapon_id : "wand",
+    maximum_health: Math.max(1, safeNumber(state.maximum_health, 100, 100000)),
+    updated_at: Date.now(),
+  });
+
+  const casts = Array.isArray(body.casts) ? body.casts.slice(0, 16) : [];
+  await Promise.all(casts.map(async (cast) => {
+    const castId = String(cast.id ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 72);
+    const spellId = String(cast.spell_id ?? "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 64);
+    if (!castId || !spellId) return;
+    await store.setJSON(`${castPrefix(code)}${castId}`, {
+      id: castId, peer_id: peerId, spell_id: spellId,
+      ox: safeNumber(cast.ox), oy: safeNumber(cast.oy), tx: safeNumber(cast.tx), ty: safeNumber(cast.ty),
+      modifiers: cast.modifiers && typeof cast.modifiers === "object" ? cast.modifiers : {},
+      created_at: Date.now(),
+    });
+  }));
+
+  if (peerId === 1 && body.host_token === lobby.host_token && body.world && typeof body.world === "object") {
+    await store.setJSON(worldKey(code), { ...body.world, updated_at: Date.now() });
+  }
+
+  const playerStates = (await Promise.all(lobby.members.map((member) => store.get(
+    stateKey(code, Number(member.peer_id)),
+    { type: "json", consistency: "strong" },
+  )))).filter((entry) => entry && Date.now() - Number(entry.updated_at ?? 0) < 10000);
+  const world = await store.get(worldKey(code), { type: "json", consistency: "strong" }) ?? {};
+  const { blobs } = await store.list({ prefix: castPrefix(code) });
+  const recentEntries = blobs.sort((a, b) => a.key.localeCompare(b.key)).slice(-128);
+  const recentCasts = (await Promise.all(recentEntries.map((entry) => store.get(entry.key, {
+    type: "json", consistency: "strong",
+  })))).filter((entry) => entry && Date.now() - Number(entry.created_at ?? 0) < 30000);
+  return json({ ok: true, players: playerStates, casts: recentCasts, world });
+}
+
 async function pollSignals(url) {
   const code = cleanCode(url.searchParams.get("code"));
   const peerId = Number(url.searchParams.get("peer_id"));
@@ -171,6 +227,7 @@ export default async (request) => {
     if (body.action === "join") return await joinLobby(body);
     if (body.action === "start") return await startLobby(body);
     if (body.action === "signal") return await sendSignal(body);
+    if (body.action === "sync") return await syncLobby(body);
     if (body.action === "leave") return await leaveLobby(body);
     return json({ ok: false, error: "Unknown lobby action." }, 400);
   } catch (error) {

@@ -122,6 +122,17 @@ func add_coins(amount: int) -> void:
 	rewards_changed.emit(experience, coins)
 
 
+func synchronize_shared_rewards(shared_experience: int, shared_coins: int) -> void:
+	var safe_experience := maxi(shared_experience, 0)
+	var safe_coins := maxi(shared_coins, 0)
+	var new_coin_reward := maxi(safe_coins - coins, 0)
+	experience = safe_experience
+	coins = safe_coins
+	if new_coin_reward > 0:
+		MetaProgression.add_coins(new_coin_reward)
+	rewards_changed.emit(experience, coins)
+
+
 func reset_session_state() -> void:
 	player = null
 	experience = 0

@@ -21,7 +21,8 @@ func _seed_fan() -> void:
 
 
 func _plant_chain_garden() -> void:
-	var center := GameManager.player.global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	var center := combat_target.global_position
 	var bloom_count := 4 + current_phase * 2
 	for bloom in range(bloom_count):
 		var angle := TAU * bloom / bloom_count + randf_range(-0.15, 0.15)
@@ -39,7 +40,8 @@ func _spawn_delayed_bloom(position: Vector2, delay: float, radius: float, damage
 
 
 func _raise_thorn_cage() -> void:
-	var center := GameManager.player.global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	var center := combat_target.global_position
 	var half_size := 175.0 + current_phase * 20.0
 	for side in range(4):
 		var angle := side * PI * 0.5

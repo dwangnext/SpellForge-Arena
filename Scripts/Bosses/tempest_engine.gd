@@ -21,18 +21,20 @@ func _turbine_spiral(sequence: int) -> void:
 
 
 func _storm_corridors(sequence: int) -> void:
-	var aim := global_position.direction_to(GameManager.player.global_position).angle()
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	var aim := global_position.direction_to(combat_target.global_position).angle()
 	var corridor_count := 2 + current_phase
 	for corridor in range(corridor_count):
 		var angle := aim + TAU * corridor / corridor_count + sequence * 0.07
 		spawn_line_hazard(global_position, angle, 1120.0, 46.0 + current_phase * 5.0, 1.0 - current_phase * 0.1, 28.0 + current_phase * 7.0, definition.secondary_color)
 	if current_phase >= 2:
-		spawn_circle_hazard(GameManager.player.global_position, 120.0 + current_phase * 18.0, 0.85, 29.0 + current_phase * 6.0, definition.primary_color)
+		spawn_circle_hazard(combat_target.global_position, 120.0 + current_phase * 18.0, 0.85, 29.0 + current_phase * 6.0, definition.primary_color)
 
 
 func _cyclone_dash() -> void:
 	var old_position := global_position
-	var player_position := GameManager.player.global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	var player_position := combat_target.global_position
 	var dash_direction := old_position.direction_to(player_position)
 	var destination := player_position + dash_direction * 390.0
 	var distance := old_position.distance_to(destination)

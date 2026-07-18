@@ -7,8 +7,9 @@ func perform_attack(sequence: int) -> void:
 	if current_phase >= 2:
 		spawn_circle_hazard(global_position, 145.0 + current_phase * 25.0, 0.75, 22.0 + current_phase * 6.0, definition.secondary_color)
 	if sequence % 3 == 0 and is_instance_valid(GameManager.player):
-		var retreat := GameManager.player.global_position.direction_to(global_position)
-		global_position = GameManager.player.global_position + retreat * 360.0
+		var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+		var retreat := combat_target.global_position.direction_to(global_position)
+		global_position = combat_target.global_position + retreat * 360.0
 		AudioManager.play_spell_sfx(global_position, 760.0, 0.24)
 
 

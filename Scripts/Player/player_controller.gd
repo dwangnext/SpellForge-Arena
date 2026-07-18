@@ -141,6 +141,17 @@ func apply_damage(amount: float) -> float:
 	return applied
 
 
+func synchronize_network_health(current: float, maximum: float) -> void:
+	var safe_maximum := maxf(maximum, 1.0)
+	if not is_equal_approx(health.maximum_health, safe_maximum):
+		health.maximum_health = safe_maximum
+	var target := clampf(current, 0.0, safe_maximum)
+	if target < health.current_health:
+		health.take_damage(health.current_health - target)
+	elif target > health.current_health:
+		health.heal(target - health.current_health)
+
+
 func _on_died() -> void:
 	_controls_enabled = false
 	velocity = Vector2.ZERO

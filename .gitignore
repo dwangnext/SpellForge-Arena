@@ -1,5 +1,7 @@
 .godot/
 node_modules/
 .DS_Store
-outputs/
+outputs/*
+!outputs/netlify/
+!outputs/netlify/**
 *.import

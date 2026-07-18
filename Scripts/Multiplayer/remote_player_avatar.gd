@@ -1,5 +1,5 @@
 class_name RemotePlayerAvatar
-extends Node2D
+extends CharacterBody2D
 
 var peer_id := 0
 var display_name := "Teammate"
@@ -9,19 +9,54 @@ var _network_velocity := Vector2.ZERO
 var _weapon_id := "wand"
 var _animation_time := 0.0
 var _received_state := false
+var _health := 100.0
+var _maximum_health := 100.0
+var _defeated := false
 
 
-func apply_network_state(position: Vector2, facing: float, velocity: Vector2, weapon_id: String) -> void:
+func _ready() -> void:
+	collision_layer = 1
+	collision_mask = 0
+	var collision := CollisionShape2D.new()
+	var capsule := CapsuleShape2D.new()
+	capsule.radius = 18.0
+	capsule.height = 44.0
+	collision.shape = capsule
+	add_child(collision)
+
+
+func apply_network_state(position: Vector2, facing: float, network_velocity: Vector2, weapon_id: String, maximum_health: float = 100.0) -> void:
 	_target_position = position
 	_target_rotation = facing
-	_network_velocity = velocity
+	_network_velocity = network_velocity
 	_weapon_id = weapon_id
+	_maximum_health = maxf(maximum_health, 1.0)
+	_health = minf(_health, _maximum_health)
 	if not _received_state:
 		global_position = position
 		global_rotation = facing
 		_received_state = true
-	visible = true
+	visible = not _defeated
 	queue_redraw()
+
+
+func apply_damage(amount: float) -> float:
+	if _defeated or amount <= 0.0:
+		return 0.0
+	var previous := _health
+	_health = maxf(_health - amount, 0.0)
+	if _health <= 0.0:
+		_defeated = true
+		visible = false
+	return previous - _health
+
+
+func is_combat_active() -> bool:
+	return _received_state and not _defeated
+
+
+func get_health_snapshot() -> Dictionary:
+	return {"current": _health, "maximum": _maximum_health}
 
 
 func _process(delta: float) -> void:
@@ -54,4 +89,7 @@ func _draw() -> void:
 		draw_circle(Vector2(34, 0), 7.0, Color("70e1f5"))
 	draw_set_transform(Vector2.ZERO, -global_rotation, Vector2.ONE)
 	draw_string(ThemeDB.fallback_font, Vector2(-42, -42), display_name, HORIZONTAL_ALIGNMENT_CENTER, 84.0, 14, Color("8fffee"))
+	var health_ratio := clampf(_health / maxf(_maximum_health, 1.0), 0.0, 1.0)
+	draw_rect(Rect2(-34, -35, 68, 5), Color(0.04, 0.04, 0.08, 0.9), true)
+	draw_rect(Rect2(-34, -35, 68 * health_ratio, 5), Color("66ef9a"), true)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

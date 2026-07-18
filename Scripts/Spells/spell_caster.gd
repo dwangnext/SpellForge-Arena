@@ -91,7 +91,7 @@ func try_cast_selected() -> bool:
 	var resolution := fusion_controller.resolve_cast(selected, base_modifiers, upgrade_controller) if fusion_controller != null else FusionResolution.new(selected, base_modifiers)
 	var effective_spell := resolution.spell
 	var modifiers := resolution.modifiers
-	NetworkManager.broadcast_spell_cast(effective_spell.id, owner_2d.global_position, target)
+	NetworkManager.broadcast_spell_cast(effective_spell.id, owner_2d.global_position, target, modifiers)
 	var first_spell := effective_spell.spell_scene.instantiate() as Spell
 	if first_spell == null:
 		push_error("Spell scene must inherit from Spell.")

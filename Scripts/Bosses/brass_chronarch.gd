@@ -18,18 +18,24 @@ func perform_attack(sequence: int) -> void:
 
 
 func _clock_hand_crossfire(sequence: int) -> void:
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	if not is_instance_valid(combat_target):
+		return
 	var hand_count := 2 + current_phase
-	var base_angle := global_position.direction_to(GameManager.player.global_position).angle()
+	var base_angle := global_position.direction_to(combat_target.global_position).angle()
 	for hand in range(hand_count):
 		var angle := base_angle + TAU * hand / hand_count + sequence * 0.09
 		spawn_line_hazard(global_position, angle, 980.0, 30.0 + current_phase * 5.0, 0.95 - current_phase * 0.1, 24.0 + current_phase * 7.0, definition.primary_color)
 	if current_phase >= 3:
-		spawn_circle_hazard(GameManager.player.global_position, 125.0, 0.7, 38.0, definition.secondary_color)
+		spawn_circle_hazard(combat_target.global_position, 125.0, 0.7, 38.0, definition.secondary_color)
 
 
 func _time_skip() -> void:
 	var old_position := global_position
-	var player_position := GameManager.player.global_position
+	var combat_target := NetworkManager.get_nearest_combat_target(global_position)
+	if not is_instance_valid(combat_target):
+		return
+	var player_position := combat_target.global_position
 	var escape_angle := randf_range(0.0, TAU)
 	global_position = player_position + Vector2.RIGHT.rotated(escape_angle) * (310.0 + current_phase * 25.0)
 	spawn_circle_hazard(old_position, 82.0, 0.55, 22.0 + current_phase * 5.0, definition.secondary_color)
