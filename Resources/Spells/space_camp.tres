@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpellDefinition" load_steps=3 format=3]
+[ext_resource type="Script" path="res://Scripts/Spells/spell_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Spells/SpawnerStructureSpell.tscn" id="2"]
+[resource]
+script = ExtResource("1")
+id = "space_camp"
+display_name = "Space Camp"
+description = "Upgradeable (in game): starts at 50 health and automatically follows the assault-ship path. Each tier adds 50 health; the final evolution costs 300 gems."
+spell_scene = ExtResource("2")
+visual_style = 9
+primary_color = Color(0.25, 0.95, 0.95, 1)
+secondary_color = Color(0.65, 0.4, 1, 1)
+unlocked_by_default = false
+unlock_cost = 15000
+weapon_id = "spawner"
+fusion_eligible = false
+damage = 0.0
+cooldown = 15.0
+cast_range = 720.0
+speed = 0.0
+knockback_force = 0.0

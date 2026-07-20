@@ -9,6 +9,8 @@ const MAX_BURST_EFFECTS := 72
 
 var _active_damage_numbers := 0
 var _active_bursts := 0
+var _damage_event_sequence := 0
+var _network_damage_events: Array[Dictionary] = []
 
 
 func spawn_damage_number(parent: Node, world_position: Vector2, amount: float, color: Color) -> void:
@@ -20,6 +22,25 @@ func spawn_damage_number(parent: Node, world_position: Vector2, amount: float, c
 	parent.add_child(number)
 	number.global_position = world_position
 	number.setup(amount, color)
+	if NetworkManager.is_world_authority():
+		_damage_event_sequence += 1
+		_network_damage_events.append({
+			"id": _damage_event_sequence,
+			"x": world_position.x,
+			"y": world_position.y,
+			"amount": amount,
+			"color": color.to_html(false),
+			"created": Time.get_ticks_msec(),
+		})
+		while _network_damage_events.size() > 32:
+			_network_damage_events.pop_front()
+
+
+func get_recent_network_damage_events() -> Array[Dictionary]:
+	var cutoff := Time.get_ticks_msec() - 1400
+	while not _network_damage_events.is_empty() and int(_network_damage_events.front().get("created", 0)) < cutoff:
+		_network_damage_events.pop_front()
+	return _network_damage_events.duplicate(true)
 
 
 func spawn_hit(parent: Node, world_position: Vector2, color: Color) -> void:

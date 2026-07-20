@@ -112,7 +112,7 @@ offset_left = 28.0
 offset_top = 672.0
 offset_right = 850.0
 offset_bottom = 694.0
-text = "WASD / ARROWS MOVE   LEFT CLICK FIRE   HOLD RIGHT CLICK MOVE   SPACE DASH   1–6 SELECT"
+text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT"
 theme_override_colors/font_color = Color(0.72, 0.76, 0.9, 1)
 
 [node name="SpellBar" type="HBoxContainer" parent="."]
@@ -164,7 +164,7 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -500.0
+offset_left = -650.0
 offset_top = 76.0
 offset_right = -28.0
 offset_bottom = 156.0
@@ -198,6 +198,10 @@ text = "+1,000 COINS"
 [node name="PointsButton" type="Button" parent="CheatBar/Margin/VBox/Header"]
 layout_mode = 2
 text = "+10 UPGRADE POINTS"
+
+[node name="GemsButton" type="Button" parent="CheatBar/Margin/VBox/Header"]
+layout_mode = 2
+text = "+100 GEMS"
 
 [node name="CheatStatus" type="Label" parent="CheatBar/Margin/VBox"]
 unique_name_in_owner = true
@@ -340,3 +344,4 @@ text = "Return to Main Menu"
 [connection signal="pressed" from="DeathPanel/VBox/MenuButton" to="." method="_on_menu_pressed"]
 [connection signal="pressed" from="CheatBar/Margin/VBox/Header/CoinsButton" to="." method="_on_cheat_coins_pressed"]
 [connection signal="pressed" from="CheatBar/Margin/VBox/Header/PointsButton" to="." method="_on_cheat_points_pressed"]
+[connection signal="pressed" from="CheatBar/Margin/VBox/Header/GemsButton" to="." method="_on_cheat_gems_pressed"]

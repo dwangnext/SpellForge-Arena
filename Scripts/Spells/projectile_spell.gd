@@ -95,8 +95,9 @@ func _find_nearest_enemy(exclude_hit_targets: bool, maximum_distance_squared: fl
 	var nearest: Node2D = null
 	var nearest_distance := INF
 	var candidates: Array[Node2D] = GameManager.enemies.duplicate()
-	if is_instance_valid(GameManager.current_boss) and not candidates.has(GameManager.current_boss):
-		candidates.append(GameManager.current_boss)
+	for boss in GameManager.active_bosses:
+		if is_instance_valid(boss) and not candidates.has(boss):
+			candidates.append(boss)
 	for candidate in candidates:
 		var enemy := candidate as Node2D
 		if enemy == null or enemy.is_queued_for_deletion():

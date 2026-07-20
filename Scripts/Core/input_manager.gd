@@ -45,6 +45,14 @@ func is_cursor_move_pressed() -> bool:
 	return Input.is_action_pressed("cursor_move")
 
 
+func is_glide_pressed() -> bool:
+	return Input.is_action_pressed("glide")
+
+
+func is_interact_just_pressed() -> bool:
+	return Input.is_action_just_pressed("interact")
+
+
 func is_spell_cast_pressed() -> bool:
 	return Input.is_action_pressed("cast_spell")
 
@@ -74,6 +82,8 @@ func _configure_controller_bindings() -> void:
 	_add_key("move_up", KEY_UP)
 	_add_key("move_down", KEY_DOWN)
 	_add_key("cast_spell", KEY_F)
+	_add_key("glide", KEY_G)
+	_add_key("interact", KEY_E)
 	_remove_mouse_button("dash", MOUSE_BUTTON_RIGHT)
 	_add_mouse_button("cursor_move", MOUSE_BUTTON_RIGHT)
 	_add_axis("move_left", 0, -1.0)
@@ -92,6 +102,7 @@ func _configure_controller_bindings() -> void:
 	_add_button("cast_spell", 1)
 	_add_button("spell_previous", 13)
 	_add_button("spell_next", 14)
+	_add_button("interact", 3)
 
 
 func _add_key(action: StringName, keycode: Key) -> void:

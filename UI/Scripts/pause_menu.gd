@@ -34,6 +34,7 @@ func open() -> void:
 	settings_panel.hide()
 	progression_panel.hide()
 	show()
+	GameManager.set_local_modal(&"pause_menu", true)
 	GameManager.set_paused(true)
 	if not SettingsManager.reduced_motion:
 		$Panel.pivot_offset = $Panel.size * 0.5
@@ -49,6 +50,7 @@ func open() -> void:
 
 func close() -> void:
 	hide()
+	GameManager.set_local_modal(&"pause_menu", false)
 	GameManager.set_paused(false)
 
 

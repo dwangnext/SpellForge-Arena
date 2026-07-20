@@ -13,7 +13,7 @@ enum VisualStyle { FIRE, ICE, LIGHTNING, ARCANE, WIND, POISON, LASER, METEOR, RA
 @export var secondary_color := Color.WHITE
 @export var unlocked_by_default := true
 @export_range(0, 1000000, 1) var unlock_cost := 0
-@export_enum("wand", "revolver", "gauntlet") var weapon_id := "wand"
+@export_enum("wand", "revolver", "gauntlet", "spawner") var weapon_id := "wand"
 @export var fusion_eligible := true
 
 @export_category("Core Statistics")
@@ -66,6 +66,6 @@ func get_validation_errors() -> PackedStringArray:
 		errors.append("Range must be greater than zero.")
 	if speed < 0.0:
 		errors.append("Speed cannot be negative.")
-	if not weapon_id in ["wand", "revolver", "gauntlet"]:
-		errors.append("Weapon ID must be wand, revolver, or gauntlet.")
+	if not weapon_id in ["wand", "revolver", "gauntlet", "spawner"]:
+		errors.append("Weapon ID must be wand, revolver, gauntlet, or spawner.")
 	return errors

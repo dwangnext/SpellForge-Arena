@@ -43,6 +43,10 @@ var _http_cast_sequence := 0
 var _pending_http_casts: Array[Dictionary] = []
 var _sync_cast_ids_in_flight: Array[String] = []
 var _seen_http_cast_ids: Dictionary = {}
+var _seen_damage_event_ids: Dictionary = {}
+var _downed_peers: Dictionary = {}
+var _relic_charges: Dictionary = {}
+var _pending_revive_target := 0
 var _socket := WebSocketPeer.new()
 var _socket_was_open := false
 var _socket_reconnect_remaining := 0.0
@@ -63,6 +67,7 @@ func _ready() -> void:
 	_signal_request = _make_request(_on_signal_sent)
 	_sync_request = _make_request(_on_sync_completed)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	GameManager.boss_reward_collected.connect(_on_boss_reward_collected)
 
 
 func _make_request(callback: Callable) -> HTTPRequest:
@@ -120,6 +125,47 @@ func get_enemy_health_multiplier() -> float:
 	return 1.5 * get_player_count()
 
 
+func is_realtime_coop_session() -> bool:
+	return game_started and is_in_lobby() and get_player_count() > 1
+
+
+func get_dropped_relic_count(peer_id: int) -> int:
+	var data := _downed_peers.get(peer_id, {}) as Dictionary
+	return int(data.get("dropped_relics", 0))
+
+
+func notify_local_player_downed() -> void:
+	if not is_realtime_coop_session() or not is_host:
+		return
+	_register_downed_peer(local_peer_id, GameManager.player.global_position if is_instance_valid(GameManager.player) else Vector2.ZERO)
+
+
+func notify_remote_player_downed(peer_id: int, position: Vector2) -> void:
+	if not is_host or not is_realtime_coop_session():
+		return
+	_register_downed_peer(peer_id, position)
+
+
+func _register_downed_peer(peer_id: int, position: Vector2) -> void:
+	if peer_id <= 0 or _downed_peers.has(peer_id):
+		return
+	var dropped := int(_relic_charges.get(peer_id, 0))
+	_relic_charges[peer_id] = 0
+	_downed_peers[peer_id] = {"x": position.x, "y": position.y, "dropped_relics": dropped}
+	var spawner := get_tree().current_scene.get_node_or_null("EnemySpawner") if get_tree().current_scene != null else null
+	if spawner != null and spawner.has_method("spawn_ambush"):
+		spawner.spawn_ambush(position, 6 + mini(dropped, 3))
+
+
+func _on_boss_reward_collected(_reward_id: String, _reward_name: String) -> void:
+	if not is_host or not is_realtime_coop_session():
+		return
+	for member_variant in members:
+		var peer_id := int((member_variant as Dictionary).get("peer_id", 0))
+		if peer_id > 0:
+			_relic_charges[peer_id] = int(_relic_charges.get(peer_id, 0)) + 1
+
+
 func request_lobby_refresh() -> void:
 	_cloudflare_status_requested = true
 	_status_elapsed = STATUS_POLL_INTERVAL
@@ -128,6 +174,7 @@ func request_lobby_refresh() -> void:
 func _process(delta: float) -> void:
 	if not is_in_lobby():
 		return
+	_capture_interact_request()
 	if _uses_cloudflare():
 		_process_cloudflare_socket(delta)
 		return
@@ -340,6 +387,10 @@ func _mark_game_started() -> void:
 	if game_started:
 		return
 	game_started = true
+	for member_variant in members:
+		var peer_id := int((member_variant as Dictionary).get("peer_id", 0))
+		if peer_id > 0 and not _relic_charges.has(peer_id):
+			_relic_charges[peer_id] = 0
 	connection_status_changed.emit("The host started the run.", false)
 	game_start_requested.emit()
 	_sync_elapsed = HTTP_SYNC_INTERVAL
@@ -464,6 +515,14 @@ func get_nearest_combat_target(from_position: Vector2) -> Node2D:
 			if distance < nearest_distance:
 				nearest = avatar
 				nearest_distance = distance
+	for ally_variant in get_tree().get_nodes_in_group("allied_targets"):
+		var ally := ally_variant as Node2D
+		if not is_instance_valid(ally) or ally.is_queued_for_deletion():
+			continue
+		var distance := from_position.distance_squared_to(ally.global_position)
+		if distance < nearest_distance:
+			nearest = ally
+			nearest_distance = distance
 	return nearest
 
 
@@ -484,7 +543,17 @@ func _capture_player_state() -> Dictionary:
 		"vy": player.velocity.y if player is CharacterBody2D else 0.0,
 		"weapon_id": MetaProgression.selected_weapon_id,
 		"maximum_health": health.maximum_health if health != null else 100.0,
+		"revive_target": _pending_revive_target,
 	}
+
+
+func _capture_interact_request() -> void:
+	if not is_realtime_coop_session() or not InputManager.is_interact_just_pressed() or not is_instance_valid(GameManager.player):
+		return
+	_pending_revive_target = _find_nearest_downed_peer(GameManager.player.global_position, local_peer_id)
+	if is_host and _pending_revive_target > 0:
+		_try_revive(local_peer_id, _pending_revive_target)
+		_pending_revive_target = 0
 
 
 func _send_socket_sync() -> void:
@@ -503,6 +572,7 @@ func _send_socket_sync() -> void:
 	var error := _socket.send_text(JSON.stringify(payload))
 	if error == OK:
 		_pending_http_casts.clear()
+		_pending_revive_target = 0
 
 
 func _handle_socket_message(message_text: String) -> void:
@@ -544,6 +614,10 @@ func _apply_socket_sync(message: Dictionary) -> void:
 			String(state.get("weapon_id", "wand")),
 			float(state.get("maximum_health", 100.0))
 		)
+	if is_host:
+		var revive_target := int(state.get("revive_target", 0))
+		if revive_target > 0:
+			_try_revive(peer_id, revive_target)
 	for cast_variant in message.get("casts", []):
 		var cast := cast_variant as Dictionary
 		var cast_id := String(cast.get("id", ""))
@@ -603,6 +677,7 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 		if _sync_cast_ids_in_flight.has(String(_pending_http_casts[index].get("id", ""))):
 			_pending_http_casts.remove_at(index)
 	_sync_cast_ids_in_flight.clear()
+	_pending_revive_target = 0
 	for state_variant in response.get("players", []):
 		var state := state_variant as Dictionary
 		var peer_id := int(state.get("peer_id", 0))
@@ -617,6 +692,10 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 				String(state.get("weapon_id", "wand")),
 				float(state.get("maximum_health", 100.0))
 			)
+		if is_host:
+			var revive_target := int(state.get("revive_target", 0))
+			if revive_target > 0:
+				_try_revive(peer_id, revive_target)
 	for cast_variant in response.get("casts", []):
 		var cast := cast_variant as Dictionary
 		var cast_id := String(cast.get("id", ""))
@@ -640,8 +719,18 @@ func _capture_world_snapshot() -> Dictionary:
 	for enemy in GameManager.enemies:
 		if is_instance_valid(enemy) and not enemy is RemoteWorldActor:
 			actors.append(_capture_actor(enemy, false))
-	if is_instance_valid(GameManager.current_boss):
-		actors.append(_capture_actor(GameManager.current_boss, true))
+	for boss in GameManager.active_bosses:
+		if is_instance_valid(boss):
+			actors.append(_capture_actor(boss, true))
+	for ally_variant in get_tree().get_nodes_in_group("network_allies"):
+		var ally := ally_variant as Node2D
+		if is_instance_valid(ally) and ally.has_method("get_network_actor_data"):
+			var ally_data := ally.call("get_network_actor_data") as Dictionary
+			ally_data["id"] = "ally-" + str(ally.get_instance_id())
+			ally_data["x"] = ally.global_position.x
+			ally_data["y"] = ally.global_position.y
+			ally_data["rotation"] = ally.global_rotation
+			actors.append(ally_data)
 	var hazards: Array[Dictionary] = []
 	for node in get_tree().get_nodes_in_group("network_hazards"):
 		var hazard := node as BossHazard
@@ -657,14 +746,22 @@ func _capture_world_snapshot() -> Dictionary:
 	var projectiles: Array[Dictionary] = []
 	for node in get_tree().get_nodes_in_group("network_projectiles"):
 		var projectile := node as BossProjectile
-		if projectile == null:
+		if projectile != null:
+			projectiles.append({
+				"id": str(projectile.get_instance_id()), "x": projectile.global_position.x, "y": projectile.global_position.y,
+				"dx": projectile.direction.x, "dy": projectile.direction.y, "speed": projectile.speed,
+				"damage": projectile.damage, "radius": projectile.radius, "lifetime": projectile.lifetime,
+				"color": projectile.accent_color.to_html(false),
+			})
 			continue
-		projectiles.append({
-			"id": str(projectile.get_instance_id()), "x": projectile.global_position.x, "y": projectile.global_position.y,
-			"dx": projectile.direction.x, "dy": projectile.direction.y, "speed": projectile.speed,
-			"damage": projectile.damage, "radius": projectile.radius, "lifetime": projectile.lifetime,
-			"color": projectile.accent_color.to_html(false),
-		})
+		var ally_projectile := node as SpawnerUnitProjectile
+		if ally_projectile != null:
+			projectiles.append({
+				"id": "ally-shot-" + str(ally_projectile.get_instance_id()), "x": ally_projectile.global_position.x, "y": ally_projectile.global_position.y,
+				"dx": ally_projectile.direction.x, "dy": ally_projectile.direction.y, "speed": ally_projectile.speed,
+				"damage": 0.0, "radius": 5.0 + ally_projectile.tier * 0.35, "lifetime": ally_projectile.lifetime,
+				"color": ally_projectile.accent_color.to_html(false),
+			})
 	var player_healths := {}
 	var local_health := GameManager.player.get_node_or_null("HealthComponent") as HealthComponent if is_instance_valid(GameManager.player) else null
 	if local_health != null:
@@ -676,6 +773,8 @@ func _capture_world_snapshot() -> Dictionary:
 	return {
 		"actors": actors, "hazards": hazards, "projectiles": projectiles,
 		"player_healths": player_healths, "experience": GameManager.experience, "coins": GameManager.coins,
+		"damage_events": VFXManager.get_recent_network_damage_events(),
+		"downed": _serialize_downed_peers(), "relic_charges": _serialize_int_dictionary(_relic_charges),
 	}
 
 
@@ -691,10 +790,11 @@ func _capture_actor(actor: Node2D, is_boss_actor: bool) -> Dictionary:
 		radius = 52.0 * actor.scale.x
 	var health := actor.get_node_or_null("HealthComponent") as HealthComponent
 	var ratio := health.current_health / maxf(health.maximum_health, 1.0) if health != null else 1.0
+	var shield_ratio := float(actor.call("get_shield_ratio")) if actor.has_method("get_shield_ratio") else 0.0
 	return {
 		"id": ("boss-" if is_boss_actor else "enemy-") + str(actor.get_instance_id()),
 		"x": actor.global_position.x, "y": actor.global_position.y, "rotation": actor.global_rotation,
-		"color": color.to_html(false), "radius": radius, "health": ratio, "boss": is_boss_actor,
+		"color": color.to_html(false), "radius": radius, "health": ratio, "shield": shield_ratio, "boss": is_boss_actor,
 	}
 
 
@@ -722,7 +822,100 @@ func _apply_world_snapshot(world: Dictionary) -> void:
 	var local_health := healths.get(str(local_peer_id), {}) as Dictionary
 	if not local_health.is_empty() and is_instance_valid(GameManager.player) and GameManager.player.has_method("synchronize_network_health"):
 		GameManager.player.synchronize_network_health(float(local_health.get("current", 100.0)), float(local_health.get("maximum", 100.0)))
+	for peer_id_variant in _remote_avatars.keys():
+		var avatar := _remote_avatars[peer_id_variant] as RemotePlayerAvatar
+		var health_data := healths.get(str(peer_id_variant), {}) as Dictionary
+		if is_instance_valid(avatar) and not health_data.is_empty():
+			avatar.apply_network_health(float(health_data.get("current", 100.0)), float(health_data.get("maximum", 100.0)))
+	_apply_network_damage_events(world.get("damage_events", []) as Array)
+	_downed_peers = _deserialize_int_dictionary(world.get("downed", {}) as Dictionary)
+	_relic_charges = _deserialize_int_dictionary(world.get("relic_charges", {}) as Dictionary)
+	for peer_id_variant in _remote_avatars:
+		var downed_avatar := _remote_avatars[peer_id_variant] as RemotePlayerAvatar
+		if is_instance_valid(downed_avatar):
+			downed_avatar.set_dropped_relics(get_dropped_relic_count(int(peer_id_variant)))
 	GameManager.synchronize_shared_rewards(int(world.get("experience", 0)), int(world.get("coins", 0)))
+
+
+func _apply_network_damage_events(events: Array) -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	for event_variant in events:
+		var event := event_variant as Dictionary
+		var event_id := int(event.get("id", 0))
+		if event_id <= 0 or _seen_damage_event_ids.has(event_id):
+			continue
+		_seen_damage_event_ids[event_id] = true
+		VFXManager.spawn_damage_number(scene, Vector2(float(event.get("x", 0.0)), float(event.get("y", 0.0))), float(event.get("amount", 0.0)), Color(String(event.get("color", "ffffff"))))
+	while _seen_damage_event_ids.size() > 128:
+		_seen_damage_event_ids.erase(_seen_damage_event_ids.keys().front())
+
+
+func _serialize_downed_peers() -> Dictionary:
+	var serialized := {}
+	for peer_id in _downed_peers:
+		serialized[str(peer_id)] = _downed_peers[peer_id]
+	return serialized
+
+
+func _serialize_int_dictionary(source: Dictionary) -> Dictionary:
+	var serialized := {}
+	for key in source:
+		serialized[str(key)] = int(source[key])
+	return serialized
+
+
+func _deserialize_int_dictionary(source: Dictionary) -> Dictionary:
+	var result := {}
+	for key in source:
+		result[int(key)] = source[key]
+	return result
+
+
+func _find_nearest_downed_peer(from_position: Vector2, reviver_peer_id: int) -> int:
+	var nearest_peer := 0
+	var nearest_distance := 125.0 * 125.0
+	for peer_id_variant in _downed_peers:
+		var peer_id := int(peer_id_variant)
+		if peer_id == reviver_peer_id:
+			continue
+		var data := _downed_peers[peer_id_variant] as Dictionary
+		var distance := from_position.distance_squared_to(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))))
+		if distance <= nearest_distance:
+			nearest_distance = distance
+			nearest_peer = peer_id
+	return nearest_peer
+
+
+func _try_revive(reviver_peer_id: int, target_peer_id: int) -> bool:
+	if not is_host or not _downed_peers.has(target_peer_id):
+		return false
+	var reviver := GameManager.player if reviver_peer_id == 1 else _remote_avatars.get(reviver_peer_id) as Node2D
+	var target_data := _downed_peers[target_peer_id] as Dictionary
+	var target_position := Vector2(float(target_data.get("x", 0.0)), float(target_data.get("y", 0.0)))
+	if not is_instance_valid(reviver) or reviver.global_position.distance_squared_to(target_position) > 145.0 * 145.0:
+		return false
+	var charge := int(_relic_charges.get(reviver_peer_id, 0))
+	var dropped := int(target_data.get("dropped_relics", 0))
+	if charge > 0:
+		_relic_charges[reviver_peer_id] = charge - 1
+	elif dropped > 0:
+		target_data["dropped_relics"] = dropped - 1
+	else:
+		connection_status_changed.emit("A boss relic is required to revive a teammate.", true)
+		return false
+	if target_peer_id == 1 and is_instance_valid(GameManager.player):
+		var health := GameManager.player.get_node_or_null("HealthComponent") as HealthComponent
+		if health != null:
+			GameManager.player.synchronize_network_health(health.maximum_health * 0.5, health.maximum_health)
+	else:
+		var avatar := _remote_avatars.get(target_peer_id) as RemotePlayerAvatar
+		if is_instance_valid(avatar):
+			avatar.revive(0.5)
+	_downed_peers.erase(target_peer_id)
+	VFXManager.spawn_death(get_tree().current_scene, target_position, Color("7fffe5"))
+	return true
 
 
 func _apply_remote_hazards(snapshots: Array) -> void:
@@ -739,6 +932,8 @@ func _apply_remote_hazards(snapshots: Array) -> void:
 			else:
 				hazard.configure_line(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), float(data.get("rotation", 0.0)), float(data.get("length", 600.0)), float(data.get("width", 46.0)), float(data.get("warning", 0.9)), float(data.get("active", 0.3)), float(data.get("damage", 25.0)), Color(String(data.get("color", "ff4455"))))
 			get_tree().current_scene.add_child(hazard)
+			hazard.collision_mask = 0
+			hazard.monitoring = false
 			_remote_hazards[network_id] = hazard
 		hazard.global_position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 		hazard.global_rotation = float(data.get("rotation", 0.0))
@@ -757,6 +952,8 @@ func _apply_remote_projectiles(snapshots: Array) -> void:
 			projectile = BOSS_PROJECTILE_SCENE.instantiate() as BossProjectile
 			projectile.configure(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))), float(data.get("speed", 320.0)), float(data.get("damage", 18.0)), float(data.get("radius", 11.0)), Color(String(data.get("color", "ff4455"))), float(data.get("lifetime", 4.0)))
 			get_tree().current_scene.add_child(projectile)
+			projectile.collision_mask = 0
+			projectile.monitoring = false
 			_remote_projectiles[network_id] = projectile
 		projectile.global_position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 		projectile.direction = Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))).normalized()
@@ -841,6 +1038,10 @@ func _reset_network_state() -> void:
 	_pending_http_casts.clear()
 	_sync_cast_ids_in_flight.clear()
 	_seen_http_cast_ids.clear()
+	_seen_damage_event_ids.clear()
+	_downed_peers.clear()
+	_relic_charges.clear()
+	_pending_revive_target = 0
 	_cloudflare_status_requested = false
 
 

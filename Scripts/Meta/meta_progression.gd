@@ -6,14 +6,15 @@ signal achievement_unlocked(definition: AchievementDefinition)
 signal character_selected(definition: CharacterDefinition)
 signal weapon_selected(weapon_id: String)
 
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 const SAVE_PATH := "user://spellforge_profile.json"
 const MAX_UPGRADE_CAP_EXTENSIONS := 3
-const WEAPON_IDS: Array[String] = ["wand", "revolver", "gauntlet"]
+const WEAPON_IDS: Array[String] = ["wand", "revolver", "gauntlet", "spawner"]
 const WEAPON_DATA := {
 	"wand": {"name": "Spellforge Wand", "cost": 0, "power": 3, "description": "Flexible elements, area control, and fusion spells"},
 	"revolver": {"name": "Arcane Revolver", "cost": 10000, "power": 4, "description": "Rapid salvos, rail rounds, and stunning ammunition"},
 	"gauntlet": {"name": "Rift Gauntlet", "cost": 18000, "power": 5, "description": "Dragonfire, time traps, teleport slashes, and singularities"},
+	"spawner": {"name": "Vanguard Spawner", "cost": 26000, "power": 5, "description": "BEST-IN-CLASS: deploy tents, bases, squads, and an in-game upgradeable space fleet"},
 }
 
 var meta_coins := 0
@@ -28,6 +29,7 @@ var selected_character_id := "arcanist"
 var selected_weapon_id := "wand"
 var unlocked_weapons: Dictionary = {"wand": true}
 var equipped_spell_ids: Array[String] = []
+var selected_support_spell_id := ""
 var upgrade_cap_extensions: Dictionary = {}
 var player_code := ""
 
@@ -303,6 +305,10 @@ func get_available_equippable_spells() -> Array[SpellDefinition]:
 		for recipe in fusion_recipes:
 			if recipe.output_spell != null and is_fusion_unlocked(recipe.id):
 				available.append(recipe.output_spell)
+	if selected_weapon_id == "spawner" and not selected_support_spell_id.is_empty():
+		var support := get_equippable_spell(selected_support_spell_id)
+		if support != null and support.weapon_id != "spawner" and not available.has(support):
+			available.append(support)
 	return available
 
 
@@ -310,7 +316,7 @@ func get_equipped_spells() -> Array[SpellDefinition]:
 	var equipped: Array[SpellDefinition] = []
 	for spell_id in equipped_spell_ids:
 		var spell := get_equippable_spell(spell_id)
-		if spell != null and spell.weapon_id == selected_weapon_id:
+		if spell != null and (spell.weapon_id == selected_weapon_id or (selected_weapon_id == "spawner" and spell.id == selected_support_spell_id)):
 			equipped.append(spell)
 	return equipped
 
@@ -319,9 +325,13 @@ func set_equipped_spells(spell_ids: Array[String]) -> bool:
 	if spell_ids.is_empty() or spell_ids.size() > 6:
 		return false
 	var valid_ids: Array[String] = []
+	var foreign_count := 0
 	for spell_id in spell_ids:
 		var definition := get_equippable_spell(spell_id)
-		if valid_ids.has(spell_id) or definition == null or definition.weapon_id != selected_weapon_id:
+		var is_support := selected_weapon_id == "spawner" and spell_id == selected_support_spell_id and definition != null and definition.weapon_id != "spawner"
+		if is_support:
+			foreign_count += 1
+		if valid_ids.has(spell_id) or definition == null or (definition.weapon_id != selected_weapon_id and not is_support) or foreign_count > 1:
 			return false
 		valid_ids.append(spell_id)
 	equipped_spell_ids = valid_ids
@@ -338,6 +348,34 @@ func get_equippable_spell(spell_id: String) -> SpellDefinition:
 		if recipe.output_spell != null and recipe.output_spell.id == spell_id and is_fusion_unlocked(recipe.id):
 			return recipe.output_spell
 	return null
+
+
+func set_spawner_support_spell(spell_id: String) -> bool:
+	var definition := get_equippable_spell(spell_id)
+	if definition == null or definition.weapon_id == "spawner":
+		return false
+	selected_support_spell_id = spell_id
+	if selected_weapon_id == "spawner":
+		var native_ids: Array[String] = []
+		for equipped_id in equipped_spell_ids:
+			var equipped := get_equippable_spell(equipped_id)
+			if equipped != null and equipped.weapon_id == "spawner":
+				native_ids.append(equipped_id)
+		equipped_spell_ids = native_ids
+	_commit_change()
+	return true
+
+
+func get_owned_support_spells_for_weapon(weapon_id: String) -> Array[SpellDefinition]:
+	var result: Array[SpellDefinition] = []
+	for spell in spells:
+		if spell.weapon_id == weapon_id and weapon_id != "spawner" and is_spell_unlocked(spell.id):
+			result.append(spell)
+	if weapon_id == "wand":
+		for recipe in fusion_recipes:
+			if recipe.output_spell != null and is_fusion_unlocked(recipe.id):
+				result.append(recipe.output_spell)
+	return result
 
 
 func find_spell_definition(spell_id: String) -> SpellDefinition:
@@ -426,6 +464,8 @@ func apply_spell_modifiers(base: SpellModifiers) -> SpellModifiers:
 	if character != null:
 		result.damage_multiplier *= character.damage_multiplier
 		result.cooldown_multiplier *= character.cooldown_multiplier
+	var weapon_balance := {"wand": 0.78, "revolver": 0.84, "gauntlet": 0.80, "spawner": 1.0}
+	result.damage_multiplier *= float(weapon_balance.get(selected_weapon_id, 1.0))
 	return result
 
 
@@ -444,6 +484,7 @@ func reset_profile() -> void:
 	unlocked_spells.clear()
 	unlocked_fusions.clear()
 	equipped_spell_ids.clear()
+	selected_support_spell_id = ""
 	upgrade_cap_extensions.clear()
 	collected_relics.clear()
 	unlocked_achievements.clear()
@@ -572,6 +613,7 @@ func _load_profile() -> void:
 	unlocked_weapons = data.get("unlocked_weapons", {"wand": true}) as Dictionary
 	unlocked_weapons["wand"] = true
 	player_code = String(data.get("player_code", ""))
+	selected_support_spell_id = String(data.get("selected_support_spell_id", ""))
 	if not selected_weapon_id in WEAPON_IDS or not is_weapon_unlocked(selected_weapon_id):
 		selected_weapon_id = "wand"
 	equipped_spell_ids.clear()
@@ -608,7 +650,8 @@ func _ensure_valid_equipped_spells() -> void:
 		if valid.size() >= 6:
 			break
 		var definition := get_equippable_spell(spell_id)
-		if not valid.has(spell_id) and definition != null and definition.weapon_id == selected_weapon_id:
+		var allowed_support := selected_weapon_id == "spawner" and spell_id == selected_support_spell_id and definition != null and definition.weapon_id != "spawner"
+		if not valid.has(spell_id) and definition != null and (definition.weapon_id == selected_weapon_id or allowed_support):
 			valid.append(spell_id)
 	equipped_spell_ids = valid
 
@@ -659,6 +702,7 @@ func _serialize() -> Dictionary:
 		"selected_weapon_id": selected_weapon_id,
 		"unlocked_weapons": unlocked_weapons,
 		"equipped_spell_ids": equipped_spell_ids,
+		"selected_support_spell_id": selected_support_spell_id,
 		"upgrade_cap_extensions": upgrade_cap_extensions,
 		"player_code": player_code,
 	}

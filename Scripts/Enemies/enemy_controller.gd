@@ -17,6 +17,8 @@ var difficulty_multiplier := 1.0
 var experience_multiplier := 1.0
 var empowerment_tier := 0
 var _animation_time := 0.0
+var _shield_health := 0.0
+var _shield_maximum := 0.0
 
 
 func _ready() -> void:
@@ -24,8 +26,13 @@ func _ready() -> void:
 		push_error("Enemy requires an EnemyDefinition resource.")
 		set_physics_process(false)
 		return
-	health.maximum_health = definition.maximum_health * difficulty_multiplier * NetworkManager.get_enemy_health_multiplier()
+	# Empowered enemies keep a normal health core. Their extra durability lives
+	# in a visible, breakable shield instead of being hidden in the health stat.
+	health.maximum_health = definition.maximum_health * NetworkManager.get_enemy_health_multiplier()
 	health.restore_to_full()
+	if empowerment_tier > 0:
+		_shield_maximum = definition.maximum_health * NetworkManager.get_enemy_health_multiplier() * (0.55 + empowerment_tier * 0.34)
+		_shield_health = _shield_maximum
 	contact_damage.set_meta("damage", definition.contact_damage * lerpf(1.0, difficulty_multiplier, 0.65))
 	scale = Vector2.ONE * definition.visual_scale * (1.0 + empowerment_tier * 0.05)
 	health.died.connect(_on_died)
@@ -65,6 +72,18 @@ func receive_hit(payload: DamagePayload) -> void:
 	if _is_dying:
 		return
 	var final_damage := DamageCalculator.calculate(payload.amount, 1.0, 0.0, definition.defense)
+	if _shield_health > 0.0:
+		var shield_damage := minf(final_damage, _shield_health)
+		_shield_health -= shield_damage
+		final_damage -= shield_damage
+		VFXManager.spawn_damage_number(get_parent(), payload.hit_position, shield_damage, _shield_color())
+		VFXManager.spawn_hit(get_parent(), payload.hit_position, _shield_color())
+		if _shield_health <= 0.0:
+			AudioManager.play_spell_sfx(payload.hit_position, 620.0, 0.2)
+			CameraEffects.flash(_shield_color(), 0.12, 0.12)
+		queue_redraw()
+		if final_damage <= 0.0:
+			return
 	var applied_damage := health.take_damage(final_damage)
 	if applied_damage <= 0.0:
 		return
@@ -74,6 +93,18 @@ func receive_hit(payload: DamagePayload) -> void:
 	VFXManager.spawn_damage_number(get_parent(), payload.hit_position, applied_damage, definition.color)
 	VFXManager.spawn_hit(get_parent(), payload.hit_position, definition.color)
 	AudioManager.play_spell_sfx(payload.hit_position, 310.0 + randf_range(-25.0, 25.0), 0.07)
+
+
+func get_shield_ratio() -> float:
+	return _shield_health / maxf(_shield_maximum, 1.0) if _shield_health > 0.0 else 0.0
+
+
+func _shield_color() -> Color:
+	if empowerment_tier >= 3:
+		return Color("b45cff")
+	if empowerment_tier == 2:
+		return Color("d6a76f")
+	return Color("ffd447")
 
 
 func _on_died() -> void:
@@ -127,8 +158,8 @@ func _draw() -> void:
 	draw_circle(Vector2(6, -6), 3.0, Color.WHITE)
 	draw_circle(Vector2(-6, -6), 1.4, Color("151725"))
 	draw_circle(Vector2(6, -6), 1.4, Color("151725"))
-	if empowerment_tier > 0:
-		var tier_color := Color("ffd447").lerp(Color("b45cff"), clampf((empowerment_tier - 1) * 0.22, 0.0, 1.0))
+	if _shield_health > 0.0:
+		var tier_color := _shield_color()
 		draw_arc(Vector2.ZERO, 24.0 + minf(empowerment_tier, 5) * 1.5, 0.0, TAU, 24, Color(tier_color, 0.72), 3.0, true)
 		for mark in range(mini(empowerment_tier, 5)):
 			var angle := -PI * 0.5 + (mark - (mini(empowerment_tier, 5) - 1) * 0.5) * 0.32

@@ -232,8 +232,9 @@ export class Lobby {
     return {
       x: safeNumber(state.x), y: safeNumber(state.y), rotation: safeNumber(state.rotation, 0, 1000),
       vx: safeNumber(state.vx, 0, 5000), vy: safeNumber(state.vy, 0, 5000),
-      weapon_id: ["wand", "revolver", "gauntlet"].includes(state.weapon_id) ? state.weapon_id : "wand",
+      weapon_id: ["wand", "revolver", "gauntlet", "spawner"].includes(state.weapon_id) ? state.weapon_id : "wand",
       maximum_health: Math.max(1, safeNumber(state.maximum_health, 100, 100000)),
+      revive_target: Math.max(0, Math.min(MAX_PLAYERS, Math.trunc(safeNumber(state.revive_target, 0, MAX_PLAYERS)))),
     };
   }
 
@@ -256,4 +257,3 @@ export class Lobby {
     }
   }
 }
-

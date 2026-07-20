@@ -53,6 +53,21 @@ func spawn_enemy(selected_definition: EnemyDefinition) -> void:
 	enemy.global_position = GameManager.player.global_position + Vector2.RIGHT.rotated(angle) * radius
 
 
+func spawn_ambush(center: Vector2, count := 7) -> void:
+	for index in range(clampi(count, 1, 14)):
+		var selected := _choose_definition()
+		if selected == null:
+			continue
+		var enemy := enemy_scene.instantiate()
+		enemy.definition = selected
+		enemy.difficulty_multiplier = _current_difficulty()
+		enemy.empowerment_tier = _enemy_tier
+		enemy.experience_multiplier = 1.0 + _enemy_tier * experience_growth_per_boss_tier
+		get_parent().add_child(enemy)
+		var angle := TAU * index / maxf(count, 1.0) + randf_range(-0.16, 0.16)
+		enemy.global_position = center + Vector2.RIGHT.rotated(angle) * randf_range(135.0, 215.0)
+
+
 func _current_difficulty() -> float:
 	return 1.0 + (_elapsed_time / 60.0) * difficulty_growth_per_minute + _enemy_tier * difficulty_per_boss_tier
 

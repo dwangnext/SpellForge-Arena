@@ -63,6 +63,7 @@ func _show_choices() -> void:
 			tween.tween_property(button, "modulate:a", 1.0, 0.2)
 			tween.tween_property(button, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	show()
+	GameManager.set_local_modal(&"level_up", true)
 	GameManager.set_paused(true)
 	var first_choice := choice_row.get_child(0) as Button
 	if first_choice != null:
@@ -93,4 +94,5 @@ func _select_upgrade(upgrade: UpgradeDefinition) -> void:
 
 func _finish_selection() -> void:
 	hide()
+	GameManager.set_local_modal(&"level_up", false)
 	GameManager.set_paused(false)

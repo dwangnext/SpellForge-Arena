@@ -58,6 +58,7 @@ func _process(delta: float) -> void:
 func _ready() -> void:
 	GameManager.player_registered.connect(_bind_player)
 	GameManager.player_died.connect(_show_death_panel)
+	GameManager.player_revived.connect(_hide_death_panel)
 	GameManager.rewards_changed.connect(_update_rewards)
 	GameManager.boss_registered.connect(_show_boss)
 	GameManager.boss_health_changed.connect(_update_boss_health)
@@ -117,6 +118,14 @@ func _update_dash(remaining: float, duration: float) -> void:
 
 func _show_death_panel() -> void:
 	death_panel.show()
+	if NetworkManager.is_realtime_coop_session():
+		%DeathPanel.get_node("VBox/Title").text = "WIZARD DOWNED\nA teammate can spend a boss relic and press E nearby to revive you."
+		%DeathPanel.get_node("VBox/RestartButton").hide()
+		%DeathPanel.get_node("VBox/MenuButton").hide()
+
+
+func _hide_death_panel() -> void:
+	death_panel.hide()
 
 
 func _update_rewards(experience: int, coins: int) -> void:
@@ -233,7 +242,7 @@ func _update_control_hint() -> void:
 	if _last_controller_mode:
 		control_hint.text = "LEFT STICK MOVE   RIGHT STICK AIM   X/RB ATTACK   B/LB CAST   D-PAD CYCLE   A DASH   START PAUSE"
 	else:
-		control_hint.text = "WASD / ARROWS MOVE   LEFT CLICK FIRE   HOLD RIGHT CLICK MOVE   SPACE DASH   1–6 SELECT"
+		control_hint.text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT"
 
 
 func _on_restart_pressed() -> void:
@@ -260,3 +269,8 @@ func _on_cheat_points_pressed() -> void:
 		return
 	level_up_screen.grant_upgrade_points(10)
 	cheat_status.text = "+10 upgrade points added"
+
+
+func _on_cheat_gems_pressed() -> void:
+	GameManager.add_experience(100)
+	cheat_status.text = "+100 run gems added"

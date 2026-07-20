@@ -191,7 +191,7 @@ text = "LEAVE LOBBY"
 [node name="WeaponPanel" type="VBoxContainer" parent="Center"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(720, 590)
+custom_minimum_size = Vector2(720, 650)
 layout_mode = 2
 theme_override_constants/separation = 18
 alignment = 1

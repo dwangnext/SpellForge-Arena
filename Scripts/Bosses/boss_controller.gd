@@ -40,8 +40,9 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	GameManager.active_bosses.erase(self)
 	if GameManager.current_boss == self and not _is_dying:
-		GameManager.current_boss = null
+		GameManager.current_boss = GameManager.active_bosses.front() if not GameManager.active_bosses.is_empty() else null
 
 
 func _physics_process(delta: float) -> void:

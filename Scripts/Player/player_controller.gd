@@ -78,6 +78,7 @@ func _update_aim() -> void:
 func _process_movement(delta: float) -> void:
 	var input_direction := InputManager.get_movement_vector()
 	var target_speed := maximum_speed * _temporary_speed_multiplier
+	var gliding := InputManager.is_glide_pressed()
 	if input_direction.length_squared() <= 0.0 and InputManager.is_cursor_move_pressed():
 		var cursor_offset := InputManager.get_aim_position(get_viewport()) - global_position
 		if cursor_offset.length() > 12.0:
@@ -85,15 +86,22 @@ func _process_movement(delta: float) -> void:
 			target_speed *= clampf(cursor_offset.length() / 90.0, 0.25, 1.0)
 	if input_direction.length_squared() > 0.0:
 		_last_move_direction = input_direction.normalized()
-		var target_velocity := _last_move_direction * target_speed
-		velocity = velocity.move_toward(target_velocity, acceleration * delta)
+		var target_velocity := _last_move_direction * target_speed * (1.18 if gliding else 1.0)
+		velocity = velocity.move_toward(target_velocity, (acceleration * 0.34 if gliding else acceleration) * delta)
 	else:
-		velocity = velocity.move_toward(Vector2.ZERO, deceleration * delta)
+		velocity = velocity.move_toward(Vector2.ZERO, (90.0 if gliding else deceleration) * delta)
 
 
 func grant_temporary_speed(multiplier: float, duration: float) -> void:
 	_temporary_speed_multiplier = maxf(_temporary_speed_multiplier, maxf(multiplier, 1.0))
 	_speed_boost_remaining = maxf(_speed_boost_remaining, duration)
+
+
+func set_controls_enabled(enabled: bool) -> void:
+	if health.is_dead and enabled:
+		return
+	_controls_enabled = enabled
+	$SpellCaster.set_combat_enabled(enabled)
 
 
 func _update_temporary_speed(delta: float) -> void:
@@ -146,7 +154,15 @@ func synchronize_network_health(current: float, maximum: float) -> void:
 	if not is_equal_approx(health.maximum_health, safe_maximum):
 		health.maximum_health = safe_maximum
 	var target := clampf(current, 0.0, safe_maximum)
-	if target < health.current_health:
+	if health.is_dead and target > 0.0:
+		health.restore_to_full()
+		if target < health.current_health:
+			health.take_damage(health.current_health - target)
+		_controls_enabled = not GameManager.is_local_input_blocked()
+		$SpellCaster.set_combat_enabled(_controls_enabled)
+		modulate = MetaProgression.get_selected_character().color if MetaProgression.get_selected_character() != null else Color.WHITE
+		GameManager.player_revived.emit()
+	elif target < health.current_health:
 		health.take_damage(health.current_health - target)
 	elif target > health.current_health:
 		health.heal(target - health.current_health)
@@ -158,6 +174,7 @@ func _on_died() -> void:
 	$SpellCaster.set_combat_enabled(false)
 	modulate = Color(0.45, 0.48, 0.58, 1.0)
 	GameManager.notify_player_died()
+	NetworkManager.notify_local_player_downed()
 
 
 func _on_spell_selected(_index: int, definition: SpellDefinition) -> void:
@@ -177,7 +194,12 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 18.0, Color("6f63d9"))
 	draw_colored_polygon(PackedVector2Array([Vector2(-18, 18), Vector2(14, 18), Vector2(-4, -30)]), Color("483b9f"))
 	draw_circle(Vector2(2, -11), 9.0, Color("f2c9a0"))
-	if _weapon_id == "revolver":
+	if _weapon_id == "spawner":
+		draw_rect(Rect2(8, -9, 33, 18), Color("2b8f74"), true)
+		draw_rect(Rect2(15, -15, 10, 8), Color("8fffe5"), true)
+		draw_line(Vector2(38, -2), Vector2(50, -2), Color("d9fff6"), 5.0, true)
+		draw_circle(Vector2(17, 0), 4.0, Color("ffd447"))
+	elif _weapon_id == "revolver":
 		draw_rect(Rect2(8, -6, 31, 12), Color("d8b35f"), true)
 		draw_rect(Rect2(34, -3, 17, 6), Color("f4df9a"), true)
 		draw_circle(Vector2(17, 0), 8.0, Color("6a4b8f"))
@@ -196,4 +218,11 @@ func _draw() -> void:
 	if _riot_shield_active:
 		draw_arc(Vector2(22, 0), 27.0, -1.25, 1.25, 24, Color(0.18, 0.95, 1.0, 0.30), 12.0, true)
 		draw_arc(Vector2(22, 0), 27.0, -1.25, 1.25, 24, Color(0.78, 0.98, 1.0), 3.0, true)
+	if health.is_dead and NetworkManager.is_realtime_coop_session():
+		draw_set_transform(Vector2.ZERO, -rotation, Vector2.ONE)
+		draw_string(ThemeDB.fallback_font, Vector2(-62, 48), "DOWNED — TEAMMATE PRESS E", HORIZONTAL_ALIGNMENT_CENTER, 124.0, 13, Color("ffd447"))
+		var dropped := NetworkManager.get_dropped_relic_count(NetworkManager.local_peer_id)
+		for index in range(mini(dropped, 7)):
+			var relic_position := Vector2((index - (mini(dropped, 7) - 1) * 0.5) * 12.0, 64.0)
+			draw_colored_polygon(PackedVector2Array([relic_position + Vector2(0, -5), relic_position + Vector2(5, 0), relic_position + Vector2(0, 5), relic_position + Vector2(-5, 0)]), Color("ffd447"))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

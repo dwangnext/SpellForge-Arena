@@ -39,6 +39,10 @@ extends Control
 var _selected_fusion_recipe: FusionRecipe
 var _pending_equipped_ids: Array[String] = []
 var _ability_filter_weapon_id := "wand"
+var _spawner_weapon_button: Button
+var _support_controls: VBoxContainer
+var _support_weapon_filter: OptionButton
+var _support_spell_filter: OptionButton
 
 
 func _ready() -> void:
@@ -58,6 +62,8 @@ func _ready() -> void:
 	player_code_label.text = "YOUR PLAYER CODE: %s" % MetaProgression.player_code
 	_populate_ability_weapon_filter()
 	_refresh_weapon_labels()
+	_build_spawner_weapon_button()
+	_build_spawner_support_controls()
 
 
 func open() -> void:
@@ -170,14 +176,50 @@ func _select_weapon(weapon_id: String) -> void:
 func _refresh_weapon_labels() -> void:
 	var selected := MetaProgression.selected_weapon_id
 	%WeaponButton.text = "CHANGE WEAPON — %s  %s" % [MetaProgression.get_weapon_display_name(selected).to_upper(), MetaProgression.get_weapon_power_circles(selected)]
-	var buttons := {"wand": %WandButton, "revolver": %RevolverButton, "gauntlet": %GauntletButton}
+	var buttons := {"wand": %WandButton, "revolver": %RevolverButton, "gauntlet": %GauntletButton, "spawner": _spawner_weapon_button}
 	for weapon_id in MetaProgression.WEAPON_IDS:
 		var button := buttons[weapon_id] as Button
+		if button == null:
+			continue
 		var unlocked := MetaProgression.is_weapon_unlocked(weapon_id)
 		var state := "EQUIPPED" if selected == weapon_id else ("UNLOCKED" if unlocked else "LOCKED — %s COINS" % _format_number(MetaProgression.get_weapon_unlock_cost(weapon_id)))
 		button.text = "%s    %s\n%s\n%s" % [MetaProgression.get_weapon_display_name(weapon_id).to_upper(), MetaProgression.get_weapon_power_circles(weapon_id), MetaProgression.get_weapon_description(weapon_id), state]
 	weapon_status.text = "EQUIPPED: %s     POWER %s     VAULT COINS: %s" % [MetaProgression.get_weapon_display_name(selected).to_upper(), MetaProgression.get_weapon_power_circles(selected), _format_number(MetaProgression.meta_coins)]
-	weapon_status.add_theme_color_override("font_color", Color("ffd447") if selected == "revolver" else (Color("e46cff") if selected == "gauntlet" else Color("9fdcff")))
+	weapon_status.add_theme_color_override("font_color", Color("75f0b4") if selected == "spawner" else (Color("ffd447") if selected == "revolver" else (Color("e46cff") if selected == "gauntlet" else Color("9fdcff"))))
+
+
+func _build_spawner_weapon_button() -> void:
+	if _spawner_weapon_button != null:
+		return
+	_spawner_weapon_button = Button.new()
+	_spawner_weapon_button.name = "SpawnerButton"
+	_spawner_weapon_button.custom_minimum_size = Vector2(0, 96)
+	_spawner_weapon_button.pressed.connect(_select_weapon.bind("spawner"))
+	weapon_panel.add_child(_spawner_weapon_button)
+	weapon_panel.move_child(_spawner_weapon_button, %GauntletButton.get_index() + 1)
+	_refresh_weapon_labels()
+
+
+func _build_spawner_support_controls() -> void:
+	if _support_controls != null:
+		return
+	_support_controls = VBoxContainer.new()
+	_support_controls.name = "SpawnerSupportControls"
+	var choose := Button.new()
+	choose.text = "CHOOSE EXISTING ABILITY — LIMIT 1"
+	choose.tooltip_text = "Bring one owned spell from any other owned weapon."
+	choose.pressed.connect(func(): _support_weapon_filter.visible = not _support_weapon_filter.visible; _support_spell_filter.visible = _support_weapon_filter.visible)
+	_support_controls.add_child(choose)
+	_support_weapon_filter = OptionButton.new()
+	_support_weapon_filter.item_selected.connect(_on_support_weapon_selected)
+	_support_controls.add_child(_support_weapon_filter)
+	_support_spell_filter = OptionButton.new()
+	_support_spell_filter.item_selected.connect(_on_support_spell_selected)
+	_support_controls.add_child(_support_spell_filter)
+	equip_panel.add_child(_support_controls)
+	equip_panel.move_child(_support_controls, equip_summary.get_index() + 1)
+	_support_weapon_filter.hide()
+	_support_spell_filter.hide()
 
 
 func _on_weapon_back_pressed() -> void:
@@ -318,6 +360,7 @@ func _refresh_equip_screen() -> void:
 	var weapon_name := MetaProgression.get_weapon_display_name(MetaProgression.selected_weapon_id)
 	var rating := MetaProgression.get_weapon_power_circles(MetaProgression.selected_weapon_id)
 	equip_subtitle.text = "Choose six %s abilities. Click again to unequip.  POWER %s" % [weapon_name, rating]
+	_refresh_spawner_support_controls()
 	_pending_equipped_ids.clear()
 	for child in equip_content.get_children():
 		equip_content.remove_child(child)
@@ -327,7 +370,8 @@ func _refresh_equip_screen() -> void:
 		button.custom_minimum_size = Vector2(250, 72)
 		button.toggle_mode = true
 		button.button_pressed = false
-		button.text = "%s%s\n%s  %s" % [spell.display_name, " — FUSION" if MetaProgression.is_fusion_spell_id(spell.id) else "", weapon_name.to_upper(), rating]
+		var upgrade_tag := " — UPGRADEABLE (IN GAME)" if spell.id == "space_camp" else ""
+		button.text = "%s%s%s\n%s  %s" % [spell.display_name, " — FUSION" if MetaProgression.is_fusion_spell_id(spell.id) else "", upgrade_tag, weapon_name.to_upper(), rating]
 		button.set_meta("spell_id", spell.id)
 		button.tooltip_text = spell.description
 		button.add_theme_color_override("font_color", spell.primary_color.lightened(0.2))
@@ -335,6 +379,44 @@ func _refresh_equip_screen() -> void:
 		button.toggled.connect(_toggle_equipped_spell.bind(spell.id, button))
 		equip_content.add_child(button)
 	_refresh_equip_summary()
+
+
+func _refresh_spawner_support_controls() -> void:
+	if _support_controls == null:
+		return
+	_support_controls.visible = MetaProgression.selected_weapon_id == "spawner"
+	if not _support_controls.visible:
+		return
+	var choose_button := _support_controls.get_child(0) as Button
+	if choose_button != null:
+		var support := MetaProgression.get_equippable_spell(MetaProgression.selected_support_spell_id)
+		choose_button.text = "CHOOSE EXISTING ABILITY — LIMIT 1" if support == null else "SUPPORT: %s — CHANGE?" % support.display_name.to_upper()
+	_support_weapon_filter.clear()
+	for weapon_id in MetaProgression.WEAPON_IDS:
+		if weapon_id == "spawner" or not MetaProgression.is_weapon_unlocked(weapon_id):
+			continue
+		_support_weapon_filter.add_item(MetaProgression.get_weapon_display_name(weapon_id))
+		_support_weapon_filter.set_item_metadata(_support_weapon_filter.item_count - 1, weapon_id)
+	if _support_weapon_filter.item_count > 0:
+		_on_support_weapon_selected(_support_weapon_filter.selected)
+
+
+func _on_support_weapon_selected(index: int) -> void:
+	if index < 0 or index >= _support_weapon_filter.item_count:
+		return
+	var weapon_id := String(_support_weapon_filter.get_item_metadata(index))
+	_support_spell_filter.clear()
+	for spell in MetaProgression.get_owned_support_spells_for_weapon(weapon_id):
+		_support_spell_filter.add_item("%s%s" % [spell.display_name, " — FUSION" if MetaProgression.is_fusion_spell_id(spell.id) else ""])
+		_support_spell_filter.set_item_metadata(_support_spell_filter.item_count - 1, spell.id)
+
+
+func _on_support_spell_selected(index: int) -> void:
+	if index < 0 or index >= _support_spell_filter.item_count:
+		return
+	var spell_id := String(_support_spell_filter.get_item_metadata(index))
+	if MetaProgression.set_spawner_support_spell(spell_id):
+		_refresh_equip_screen()
 
 
 func _toggle_equipped_spell(enabled: bool, spell_id: String, button: Button) -> void:
@@ -478,7 +560,8 @@ func _refresh_ability_shop() -> void:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 56)
 		button.custom_minimum_size = Vector2(0, 70)
-		button.text = "%s  —  %s\n%s  %s" % [spell.display_name, "OWNED" if owned else ("UNLOCK %s FIRST" % weapon_name.to_upper() if weapon_locked else "%s coins" % _format_number(spell.unlock_cost)), weapon_name.to_upper(), rating]
+		var upgrade_tag := "  —  UPGRADEABLE (IN GAME)" if spell.id == "space_camp" else ""
+		button.text = "%s%s  —  %s\n%s  %s" % [spell.display_name, upgrade_tag, "OWNED" if owned else ("UNLOCK %s FIRST" % weapon_name.to_upper() if weapon_locked else "%s coins" % _format_number(spell.unlock_cost)), weapon_name.to_upper(), rating]
 		button.tooltip_text = spell.description
 		button.disabled = owned or weapon_locked or MetaProgression.meta_coins < spell.unlock_cost
 		button.pressed.connect(_purchase_ability.bind(spell))
