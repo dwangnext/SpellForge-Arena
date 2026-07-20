@@ -46,6 +46,7 @@ func _process(delta: float) -> void:
 	if _space_camp_refresh_remaining <= 0.0:
 		_space_camp_refresh_remaining = 0.12
 		_refresh_space_camp_panel()
+	_handle_space_camp_hotkeys()
 	var controller_mode := InputManager.is_using_controller()
 	if controller_mode != _last_controller_mode:
 		_last_controller_mode = controller_mode
@@ -254,7 +255,7 @@ func _update_control_hint() -> void:
 	if _last_controller_mode:
 		control_hint.text = "LEFT STICK MOVE   RIGHT STICK AIM   X/RB ATTACK   B/LB CAST   D-PAD CYCLE   A DASH   START PAUSE"
 	else:
-		control_hint.text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT"
+		control_hint.text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT   P CAMP UPGRADE"
 
 
 func _on_restart_pressed() -> void:
@@ -305,11 +306,11 @@ func _refresh_space_camp_panel() -> void:
 	space_camp_upgrade_button.visible = not maxed and not choice_required
 	space_camp_final_choices.visible = not maxed and choice_required
 	if not maxed and not choice_required:
-		space_camp_upgrade_button.text = "UPGRADE TO %s — %d GEMS" % [String(state.get("next_name", "NEXT TIER")).to_upper(), cost]
+		space_camp_upgrade_button.text = "P — UPGRADE TO %s — %d GEMS" % [String(state.get("next_name", "NEXT TIER")).to_upper(), cost]
 		space_camp_upgrade_button.disabled = GameManager.experience < cost
 	if choice_required:
-		odyssey_button.text = "ODYSSEY — %d GEMS" % cost
-		aries_button.text = "ARIES — %d GEMS" % cost
+		odyssey_button.text = "N — ODYSSEY — %d GEMS" % cost
+		aries_button.text = "M — ARIES — %d GEMS" % cost
 		odyssey_button.disabled = GameManager.experience < cost
 		aries_button.disabled = GameManager.experience < cost
 	space_camp_panel.show()
@@ -329,6 +330,17 @@ func _nearest_space_camp() -> Node2D:
 				nearest_distance = distance
 				nearest = candidate
 	return nearest
+
+
+func _handle_space_camp_hotkeys() -> void:
+	if not space_camp_panel.visible or _active_space_camp_id.is_empty():
+		return
+	if InputManager.is_space_camp_upgrade_just_pressed() and space_camp_upgrade_button.visible and not space_camp_upgrade_button.disabled:
+		_on_space_camp_upgrade_pressed()
+	elif InputManager.is_odyssey_choice_just_pressed() and odyssey_button.visible and not odyssey_button.disabled:
+		_on_odyssey_pressed()
+	elif InputManager.is_aries_choice_just_pressed() and aries_button.visible and not aries_button.disabled:
+		_on_aries_pressed()
 
 
 func _on_space_camp_upgrade_pressed() -> void:

@@ -53,6 +53,18 @@ func is_interact_just_pressed() -> bool:
 	return Input.is_action_just_pressed("interact")
 
 
+func is_space_camp_upgrade_just_pressed() -> bool:
+	return Input.is_action_just_pressed("space_camp_upgrade")
+
+
+func is_odyssey_choice_just_pressed() -> bool:
+	return Input.is_action_just_pressed("space_camp_odyssey")
+
+
+func is_aries_choice_just_pressed() -> bool:
+	return Input.is_action_just_pressed("space_camp_aries")
+
+
 func is_spell_cast_pressed() -> bool:
 	return Input.is_action_pressed("cast_spell")
 
@@ -84,6 +96,9 @@ func _configure_controller_bindings() -> void:
 	_add_key("cast_spell", KEY_F)
 	_add_key("glide", KEY_G)
 	_add_key("interact", KEY_E)
+	_add_key("space_camp_upgrade", KEY_P)
+	_add_key("space_camp_odyssey", KEY_N)
+	_add_key("space_camp_aries", KEY_M)
 	_remove_mouse_button("dash", MOUSE_BUTTON_RIGHT)
 	_add_mouse_button("cursor_move", MOUSE_BUTTON_RIGHT)
 	_add_axis("move_left", 0, -1.0)

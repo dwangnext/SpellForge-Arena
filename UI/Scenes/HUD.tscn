@@ -110,9 +110,9 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 28.0
 offset_top = 672.0
-offset_right = 850.0
+offset_right = 1180.0
 offset_bottom = 694.0
-text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT"
+text = "WASD / ARROWS MOVE   G GLIDE   LEFT CLICK FIRE   RIGHT CLICK MOVE   E REVIVE   SPACE DASH   1–6 SELECT   P CAMP UPGRADE"
 theme_override_colors/font_color = Color(0.72, 0.76, 0.9, 1)
 
 [node name="SpellBar" type="HBoxContainer" parent="."]
@@ -246,7 +246,7 @@ autowrap_mode = 2
 [node name="UpgradeButton" type="Button" parent="SpaceCampPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "UPGRADE TO DELTA — 30 GEMS"
+text = "P — UPGRADE TO DELTA — 30 GEMS"
 
 [node name="FinalChoices" type="HBoxContainer" parent="SpaceCampPanel/Margin/VBox"]
 unique_name_in_owner = true
@@ -258,13 +258,13 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ODYSSEY — 300"
+text = "N — ODYSSEY — 300"
 
 [node name="AriesButton" type="Button" parent="SpaceCampPanel/Margin/VBox/FinalChoices"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ARIES — 300"
+text = "M — ARIES — 300"
 
 [node name="FusionLabel" type="Label" parent="."]
 unique_name_in_owner = true
