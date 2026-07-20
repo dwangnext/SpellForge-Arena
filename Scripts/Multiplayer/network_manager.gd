@@ -9,8 +9,13 @@ const MAX_PLAYERS := 3
 const SIGNAL_POLL_INTERVAL := 0.28
 const STATUS_POLL_INTERVAL := 0.75
 const PLAYER_STATE_INTERVAL := 0.05
-const HTTP_SYNC_INTERVAL := 0.15
+const HTTP_SYNC_INTERVAL := 0.25
 const WEBSOCKET_SYNC_INTERVAL := 0.1
+const MAX_SEEN_CAST_IDS := 384
+const MAX_SNAPSHOT_ENEMIES := 72
+const MAX_SNAPSHOT_ALLIES := 48
+const MAX_SNAPSHOT_HAZARDS := 32
+const MAX_SNAPSHOT_PROJECTILES := 64
 # Filled in after the first Cloudflare deployment prints its workers.dev URL.
 const CLOUDFLARE_WORKER_URL := ""
 const BOSS_HAZARD_SCENE := preload("res://Scenes/Hazards/BossHazard.tscn")
@@ -124,9 +129,7 @@ func get_player_count() -> int:
 
 
 func get_enemy_health_multiplier() -> float:
-	if not is_in_lobby():
-		return 1.0
-	return 1.5 * get_player_count()
+	return 1.0
 
 
 func is_realtime_coop_session() -> bool:
@@ -222,17 +225,21 @@ func _process(delta: float) -> void:
 	_status_elapsed += delta
 	_state_elapsed += delta
 	_sync_elapsed += delta
-	if _poll_elapsed >= SIGNAL_POLL_INTERVAL and _poll_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-		_poll_elapsed = 0.0
-		_http_get(_poll_request, {"action": "poll", "code": join_code, "peer_id": local_peer_id})
-	if _status_elapsed >= STATUS_POLL_INTERVAL and _status_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-		_status_elapsed = 0.0
-		var status_parameters := {"action": "status", "code": join_code}
-		if is_host and GameManager.owner_access_enabled:
-			status_parameters["owner_code"] = "609618"
-			status_parameters["host_token"] = _host_token
-		_http_get(_status_request, status_parameters)
-	_flush_signal_outbox()
+	# Signaling and lobby status are only needed before the run starts. Keeping
+	# these requests alive during combat caused needless network pressure beside
+	# the authoritative world sync, especially on Netlify's HTTP fallback.
+	if not game_started:
+		if _poll_elapsed >= SIGNAL_POLL_INTERVAL and _poll_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+			_poll_elapsed = 0.0
+			_http_get(_poll_request, {"action": "poll", "code": join_code, "peer_id": local_peer_id})
+		if _status_elapsed >= STATUS_POLL_INTERVAL and _status_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+			_status_elapsed = 0.0
+			var status_parameters := {"action": "status", "code": join_code}
+			if is_host and GameManager.owner_access_enabled:
+				status_parameters["owner_code"] = "609618"
+				status_parameters["host_token"] = _host_token
+			_http_get(_status_request, status_parameters)
+		_flush_signal_outbox()
 	if game_started and _state_elapsed >= PLAYER_STATE_INTERVAL:
 		_state_elapsed = 0.0
 		_broadcast_local_player_state()
@@ -668,7 +675,7 @@ func _apply_socket_sync(message: Dictionary) -> void:
 		var cast_id := String(cast.get("id", ""))
 		if cast_id.is_empty() or _seen_http_cast_ids.has(cast_id):
 			continue
-		_seen_http_cast_ids[cast_id] = true
+		_remember_remote_cast(cast_id)
 		_spawn_remote_spell(
 			peer_id,
 			String(cast.get("spell_id", "")),
@@ -749,7 +756,7 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 		var peer_id := int(cast.get("peer_id", 0))
 		if cast_id.is_empty() or peer_id == local_peer_id or _seen_http_cast_ids.has(cast_id):
 			continue
-		_seen_http_cast_ids[cast_id] = true
+		_remember_remote_cast(cast_id)
 		_spawn_remote_spell(
 			peer_id,
 			String(cast.get("spell_id", "")),
@@ -763,12 +770,17 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 
 func _capture_world_snapshot() -> Dictionary:
 	var actors: Array[Dictionary] = []
+	var captured_enemies := 0
 	for enemy in GameManager.enemies:
 		if is_instance_valid(enemy) and not enemy is RemoteWorldActor:
 			actors.append(_capture_actor(enemy, false))
+			captured_enemies += 1
+			if captured_enemies >= MAX_SNAPSHOT_ENEMIES:
+				break
 	for boss in GameManager.active_bosses:
 		if is_instance_valid(boss):
 			actors.append(_capture_actor(boss, true))
+	var captured_allies := 0
 	for ally_variant in get_tree().get_nodes_in_group("network_allies"):
 		var ally := ally_variant as Node2D
 		if is_instance_valid(ally) and ally.has_method("get_network_actor_data"):
@@ -778,6 +790,9 @@ func _capture_world_snapshot() -> Dictionary:
 			ally_data["y"] = ally.global_position.y
 			ally_data["rotation"] = ally.global_rotation
 			actors.append(ally_data)
+			captured_allies += 1
+			if captured_allies >= MAX_SNAPSHOT_ALLIES:
+				break
 	var hazards: Array[Dictionary] = []
 	for node in get_tree().get_nodes_in_group("network_hazards"):
 		var hazard := node as BossHazard
@@ -790,6 +805,8 @@ func _capture_world_snapshot() -> Dictionary:
 			"warning": hazard.warning_duration, "active": hazard.active_duration, "elapsed": hazard._elapsed,
 			"damage": hazard.damage, "color": hazard.accent_color.to_html(false),
 		})
+		if hazards.size() >= MAX_SNAPSHOT_HAZARDS:
+			break
 	var projectiles: Array[Dictionary] = []
 	for node in get_tree().get_nodes_in_group("network_projectiles"):
 		var projectile := node as BossProjectile
@@ -800,6 +817,8 @@ func _capture_world_snapshot() -> Dictionary:
 				"damage": projectile.damage, "radius": projectile.radius, "lifetime": projectile.lifetime,
 				"color": projectile.accent_color.to_html(false),
 			})
+			if projectiles.size() >= MAX_SNAPSHOT_PROJECTILES:
+				break
 			continue
 		var ally_projectile := node as SpawnerUnitProjectile
 		if ally_projectile != null:
@@ -810,6 +829,8 @@ func _capture_world_snapshot() -> Dictionary:
 				"damage": 0.0, "radius": ally_radius, "lifetime": ally_projectile.lifetime,
 				"color": ally_projectile.accent_color.to_html(false), "shot_style": ally_projectile.shot_style,
 			})
+			if projectiles.size() >= MAX_SNAPSHOT_PROJECTILES:
+				break
 	var player_healths := {}
 	var local_health := GameManager.player.get_node_or_null("HealthComponent") as HealthComponent if is_instance_valid(GameManager.player) else null
 	if local_health != null:
@@ -898,6 +919,12 @@ func _apply_network_damage_events(events: Array) -> void:
 		VFXManager.spawn_damage_number(scene, Vector2(float(event.get("x", 0.0)), float(event.get("y", 0.0))), float(event.get("amount", 0.0)), Color(String(event.get("color", "ffffff"))))
 	while _seen_damage_event_ids.size() > 128:
 		_seen_damage_event_ids.erase(_seen_damage_event_ids.keys().front())
+
+
+func _remember_remote_cast(cast_id: String) -> void:
+	_seen_http_cast_ids[cast_id] = true
+	while _seen_http_cast_ids.size() > MAX_SEEN_CAST_IDS:
+		_seen_http_cast_ids.erase(_seen_http_cast_ids.keys().front())
 
 
 func _serialize_downed_peers() -> Dictionary:

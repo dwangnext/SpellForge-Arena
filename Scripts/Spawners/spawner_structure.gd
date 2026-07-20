@@ -79,17 +79,9 @@ func _physics_process(delta: float) -> void:
 
 
 func apply_damage(amount: float) -> float:
-	return _apply_damage_internal(amount * 1.35)
-
-
-func apply_enemy_contact_damage(amount: float) -> float:
-	return _apply_damage_internal(amount)
-
-
-func _apply_damage_internal(amount: float) -> float:
 	if _is_destroyed or amount <= 0.0:
 		return 0.0
-	var applied := minf(current_health, amount)
+	var applied := minf(current_health, amount * 1.35)
 	current_health -= applied
 	VFXManager.spawn_damage_number(get_parent(), global_position, applied, accent_color)
 	queue_redraw()

@@ -2,8 +2,6 @@ class_name ContactDamageComponent
 extends Area2D
 
 @export_range(0.1, 5.0, 0.05) var damage_interval := 0.8
-@export_range(0.1, 5.0, 0.05) var allied_damage_interval := 1.0
-@export_range(0.0, 100.0, 0.5) var allied_contact_damage := 10.0
 
 var _target_cooldowns: Dictionary = {}
 
@@ -24,14 +22,6 @@ func _try_damage(body: Node) -> void:
 		return
 	var target_id := body.get_instance_id()
 	if float(_target_cooldowns.get(target_id, 0.0)) > 0.0:
-		return
-	var is_summoned_ally := body.is_in_group("allied_targets") and body != GameManager.player
-	if is_summoned_ally:
-		_target_cooldowns[target_id] = allied_damage_interval
-		if body.has_method("apply_enemy_contact_damage"):
-			body.apply_enemy_contact_damage(allied_contact_damage)
-		else:
-			body.apply_damage(allied_contact_damage)
 		return
 	_target_cooldowns[target_id] = damage_interval
 	body.apply_damage(float(get_meta("damage", 10.0)))

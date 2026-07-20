@@ -3,6 +3,8 @@ import { getStore } from "@netlify/blobs";
 const store = getStore("spellforge-coop-lobbies");
 const MAX_PLAYERS = 3;
 const LOBBY_TTL_MS = 30 * 60 * 1000;
+const CAST_TTL_MS = 4 * 1000;
+const MAX_RECENT_CASTS_PER_PLAYER = 32;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
@@ -22,10 +24,23 @@ const cleanPlayerCode = (value) => /^\d{6}$/.test(String(value ?? "")) ? String(
 const metaKey = (code) => `lobbies/${code}/meta`;
 const stateKey = (code, peerId) => `runtime/${code}/players/${peerId}`;
 const worldKey = (code) => `runtime/${code}/world`;
-const castPrefix = (code) => `runtime/${code}/casts/`;
 const safeNumber = (value, fallback = 0, limit = 100000) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(-limit, Math.min(limit, parsed)) : fallback;
+};
+const cleanCast = (cast, peerId, createdAt = Date.now()) => {
+  const id = String(cast?.id ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 72);
+  const spellId = String(cast?.spell_id ?? "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 64);
+  if (!id || !spellId) return null;
+  return {
+    id,
+    peer_id: peerId,
+    spell_id: spellId,
+    ox: safeNumber(cast.ox), oy: safeNumber(cast.oy),
+    tx: safeNumber(cast.tx), ty: safeNumber(cast.ty),
+    modifiers: cast.modifiers && typeof cast.modifiers === "object" ? cast.modifiers : {},
+    created_at: createdAt,
+  };
 };
 const publicMembers = (members, revealCodes = false) => members.map((member) => ({
   peer_id: Number(member.peer_id),
@@ -131,6 +146,20 @@ async function syncLobby(body) {
   }
 
   const state = body.state ?? {};
+  const now = Date.now();
+  const previousState = await store.get(stateKey(code, peerId), { type: "json", consistency: "strong" });
+  const castBuffer = new Map();
+  for (const previousCast of Array.isArray(previousState?.casts) ? previousState.casts : []) {
+    const createdAt = Number(previousCast?.created_at ?? 0);
+    if (now - createdAt > CAST_TTL_MS) continue;
+    const cleaned = cleanCast(previousCast, peerId, createdAt);
+    if (cleaned) castBuffer.set(cleaned.id, cleaned);
+  }
+  for (const incomingCast of Array.isArray(body.casts) ? body.casts.slice(0, 16) : []) {
+    const cleaned = cleanCast(incomingCast, peerId, now);
+    if (cleaned) castBuffer.set(cleaned.id, cleaned);
+  }
+  const recentPlayerCasts = Array.from(castBuffer.values()).slice(-MAX_RECENT_CASTS_PER_PLAYER);
   await store.setJSON(stateKey(code, peerId), {
     peer_id: peerId,
     x: safeNumber(state.x), y: safeNumber(state.y), rotation: safeNumber(state.rotation, 0, 1000),
@@ -141,21 +170,9 @@ async function syncLobby(body) {
     camp_upgrade_id: String(state.camp_upgrade_id ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80),
     camp_upgrade_choice: ["odyssey", "aries"].includes(state.camp_upgrade_choice) ? state.camp_upgrade_choice : "",
     camp_upgrade_request: String(state.camp_upgrade_request ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80),
-    updated_at: Date.now(),
+    casts: recentPlayerCasts,
+    updated_at: now,
   });
-
-  const casts = Array.isArray(body.casts) ? body.casts.slice(0, 16) : [];
-  await Promise.all(casts.map(async (cast) => {
-    const castId = String(cast.id ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 72);
-    const spellId = String(cast.spell_id ?? "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 64);
-    if (!castId || !spellId) return;
-    await store.setJSON(`${castPrefix(code)}${castId}`, {
-      id: castId, peer_id: peerId, spell_id: spellId,
-      ox: safeNumber(cast.ox), oy: safeNumber(cast.oy), tx: safeNumber(cast.tx), ty: safeNumber(cast.ty),
-      modifiers: cast.modifiers && typeof cast.modifiers === "object" ? cast.modifiers : {},
-      created_at: Date.now(),
-    });
-  }));
 
   if (peerId === 1 && body.host_token === lobby.host_token && body.world && typeof body.world === "object") {
     await store.setJSON(worldKey(code), { ...body.world, updated_at: Date.now() });
@@ -166,11 +183,11 @@ async function syncLobby(body) {
     { type: "json", consistency: "strong" },
   )))).filter((entry) => entry && Date.now() - Number(entry.updated_at ?? 0) < 10000);
   const world = await store.get(worldKey(code), { type: "json", consistency: "strong" }) ?? {};
-  const { blobs } = await store.list({ prefix: castPrefix(code) });
-  const recentEntries = blobs.sort((a, b) => a.key.localeCompare(b.key)).slice(-128);
-  const recentCasts = (await Promise.all(recentEntries.map((entry) => store.get(entry.key, {
-    type: "json", consistency: "strong",
-  })))).filter((entry) => entry && Date.now() - Number(entry.created_at ?? 0) < 30000);
+  const recentCasts = playerStates
+    .flatMap((entry) => Array.isArray(entry.casts) ? entry.casts : [])
+    .filter((entry) => entry && now - Number(entry.created_at ?? 0) <= CAST_TTL_MS)
+    .sort((a, b) => Number(a.created_at ?? 0) - Number(b.created_at ?? 0))
+    .slice(-(MAX_RECENT_CASTS_PER_PLAYER * MAX_PLAYERS));
   return json({ ok: true, players: playerStates, casts: recentCasts, world });
 }
 
