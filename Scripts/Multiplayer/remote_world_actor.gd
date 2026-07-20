@@ -12,6 +12,13 @@ var _is_ally := false
 var _ally_kind := ""
 var _label := ""
 var _space_tier := 0
+var _structure_id := ""
+var _ship_variant := ""
+var _next_cost := 0
+var _choice_required := false
+var _upgrade_maxed := false
+var _tier_name := ""
+var _next_name := ""
 var _received_state := false
 var _hurtbox: Area2D
 
@@ -52,6 +59,15 @@ func apply_snapshot(data: Dictionary) -> void:
 	_ally_kind = String(data.get("ally_kind", ""))
 	_label = String(data.get("label", ""))
 	_space_tier = int(data.get("space_tier", 0))
+	_structure_id = String(data.get("structure_id", ""))
+	_ship_variant = String(data.get("ship_variant", ""))
+	_next_cost = int(data.get("next_cost", 0))
+	_choice_required = bool(data.get("choice_required", false))
+	_upgrade_maxed = bool(data.get("maxed", false))
+	_tier_name = String(data.get("tier_name", _label))
+	_next_name = String(data.get("next_name", ""))
+	if _structure_id == "space_camp" and not is_in_group("remote_space_camps"):
+		add_to_group("remote_space_camps")
 	if not _received_state:
 		global_position = _target_position
 		_received_state = true
@@ -71,14 +87,30 @@ func receive_hit(payload: DamagePayload) -> void:
 	VFXManager.spawn_hit(get_parent(), payload.hit_position, _accent_color)
 
 
+func get_space_upgrade_state() -> Dictionary:
+	return {
+		"tier": _space_tier, "tier_name": _tier_name, "path": _ship_variant,
+		"next_cost": _next_cost, "choice_required": _choice_required,
+		"maxed": _upgrade_maxed, "next_name": _next_name,
+	}
+
+
 func _draw() -> void:
 	var radius := _visual_radius
 	if _is_ally:
 		if _ally_kind == "structure":
-			draw_rect(Rect2(-radius, -radius * 0.72, radius * 2.0, radius * 1.44), _accent_color.darkened(0.25), true)
-			draw_arc(Vector2.ZERO, radius + 5.0, 0.0, TAU, 30, _accent_color, 4.0, true)
+			if _structure_id == "space_camp":
+				draw_circle(Vector2.ZERO, radius * 0.68, Color("172044"))
+				draw_arc(Vector2.ZERO, radius * 0.82, 0.0, TAU, 30, _accent_color, 5.0, true)
+				draw_circle(Vector2.ZERO, 8.0, Color("9ffcff"))
+			else:
+				draw_rect(Rect2(-radius, -radius * 0.72, radius * 2.0, radius * 1.44), _accent_color.darkened(0.25), true)
+				draw_arc(Vector2.ZERO, radius + 5.0, 0.0, TAU, 30, _accent_color, 4.0, true)
+		elif _ally_kind == "ship":
+			_draw_remote_ship(radius)
 		else:
-			draw_colored_polygon(PackedVector2Array([Vector2(radius + 5, 0), Vector2(-radius, -radius * 0.7), Vector2(-radius * 0.45, 0), Vector2(-radius, radius * 0.7)]), _accent_color)
+			draw_circle(Vector2.ZERO, radius * 0.8, _accent_color)
+			draw_line(Vector2(3, 0), Vector2(radius + 7, 0), Color("e8f6ff"), 3.0, true)
 		var ally_bar_width := radius * 2.2
 		draw_rect(Rect2(-ally_bar_width * 0.5, -radius - 14.0, ally_bar_width, 5.0), Color(0.04, 0.04, 0.08, 0.9), true)
 		draw_rect(Rect2(-ally_bar_width * 0.5, -radius - 14.0, ally_bar_width * _health_ratio, 5.0), Color("76f29e"), true)
@@ -97,3 +129,24 @@ func _draw() -> void:
 	var bar_width := radius * 2.2
 	draw_rect(Rect2(-bar_width * 0.5, -radius - 14.0, bar_width, 5.0), Color(0.04, 0.04, 0.08, 0.9), true)
 	draw_rect(Rect2(-bar_width * 0.5, -radius - 14.0, bar_width * _health_ratio, 5.0), Color("ffcb58" if is_boss else "66ef9a"), true)
+
+
+func _draw_remote_ship(radius: float) -> void:
+	if _ship_variant == "odyssey":
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.5, 0.72))
+		draw_circle(Vector2.ZERO, radius, _accent_color)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_arc(Vector2.ZERO, radius + 4.0, 0.0, TAU, 26, Color("9ffcff"), 2.5, true)
+		return
+	if _ship_variant == "aries":
+		draw_colored_polygon(PackedVector2Array([Vector2(radius + 12, 0), Vector2(2, -radius), Vector2(-radius, -radius * 0.8), Vector2(-radius * 0.5, 0), Vector2(-radius, radius * 0.8), Vector2(2, radius)]), _accent_color)
+		for dart_index in range(5):
+			draw_circle(Vector2.RIGHT.rotated(TAU * dart_index / 5.0) * (radius + 3.0), 2.5, Color("ffd36b"))
+		return
+	draw_colored_polygon(PackedVector2Array([Vector2(radius + 5, 0), Vector2(-radius, -radius * 0.7), Vector2(-radius * 0.45, 0), Vector2(-radius, radius * 0.7)]), _accent_color)
+	if _space_tier >= 2:
+		draw_line(Vector2(-2, -radius * 0.3), Vector2(-radius * 0.75, -radius), _accent_color.lightened(0.25), 4.0, true)
+		draw_line(Vector2(-2, radius * 0.3), Vector2(-radius * 0.75, radius), _accent_color.lightened(0.25), 4.0, true)
+	if _space_tier >= 4:
+		draw_circle(Vector2(radius * 0.35, -radius * 0.35), 3.0, Color("ffd36b"))
+		draw_circle(Vector2(radius * 0.35, radius * 0.35), 3.0, Color("ffd36b"))

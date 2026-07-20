@@ -1,8 +1,9 @@
 class_name SpawnerStructure
 extends StaticBody2D
 
-const SPACE_TIER_NAMES := ["Fly", "Delta", "Pioneer", "Crusader", "Marauder", "Odyssey", "Aries"]
-const SPACE_TIER_COSTS := [30, 60, 110, 180, 240, 300]
+const SPACE_TIER_NAMES := ["Fly", "Delta", "Pioneer", "Crusader", "Marauder"]
+const SPACE_TIER_COSTS := [30, 60, 110, 180, 300]
+const FINAL_SPACE_TIER := 5
 
 var structure_id := "frontier_tent"
 var display_name := "Frontier Tent"
@@ -15,6 +16,7 @@ var unit_damage := 10.0
 var ranged_units := false
 var _spawn_remaining := 1.0
 var _space_tier := 0
+var _space_path := ""
 var _is_destroyed := false
 
 
@@ -48,6 +50,8 @@ func configure(id: String, title: String, position: Vector2, color: Color) -> vo
 func _ready() -> void:
 	add_to_group("allied_targets")
 	add_to_group("network_allies")
+	if structure_id == "space_camp":
+		add_to_group("space_camps")
 	collision_layer = 1
 	collision_mask = 4
 	var collision := CollisionShape2D.new()
@@ -66,8 +70,6 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if _is_destroyed or not NetworkManager.is_world_authority():
 		return
-	if structure_id == "space_camp":
-		_try_space_upgrade()
 	_spawn_remaining -= delta
 	if _spawn_remaining <= 0.0:
 		_spawn_remaining = spawn_interval
@@ -93,10 +95,17 @@ func get_health_ratio() -> float:
 
 
 func get_network_actor_data() -> Dictionary:
+	var upgrade_state := get_space_upgrade_state()
 	return {
 		"ally": true, "ally_kind": "structure", "label": display_name,
 		"color": accent_color.to_html(false), "radius": 38.0,
 		"health": get_health_ratio(), "space_tier": _space_tier,
+		"structure_id": structure_id, "ship_variant": _space_path,
+		"next_cost": int(upgrade_state.get("next_cost", 0)),
+		"choice_required": bool(upgrade_state.get("choice_required", false)),
+		"maxed": bool(upgrade_state.get("maxed", false)),
+		"tier_name": String(upgrade_state.get("tier_name", "")),
+		"next_name": String(upgrade_state.get("next_name", "")),
 	}
 
 
@@ -110,31 +119,62 @@ func _spawn_unit() -> void:
 	var is_space := structure_id == "space_camp"
 	var tier_scale := 1.0 + _space_tier * 0.24
 	unit.configure(
-		SPACE_TIER_NAMES[_space_tier] if is_space else ("Rifle Squad" if ranged_units else "Bat Guard"),
+		_space_tier_name() if is_space else ("Rifle Squad" if ranged_units else "Bat Guard"),
 		global_position + Vector2(randf_range(-45.0, 45.0), randf_range(-45.0, 45.0)),
 		unit_health + (_space_tier * 50.0 if is_space else 0.0),
 		unit_damage * tier_scale,
 		true if is_space else ranged_units,
 		accent_color.lightened(minf(_space_tier * 0.06, 0.3)),
 		is_space,
-		_space_tier
+		_space_tier,
+		_space_path
 	)
 	get_parent().add_child(unit)
 
 
-func _try_space_upgrade() -> void:
-	if _space_tier >= SPACE_TIER_COSTS.size():
-		return
+func request_space_upgrade(choice := "") -> bool:
+	if structure_id != "space_camp" or _space_tier >= FINAL_SPACE_TIER:
+		return false
+	var normalized_choice := choice.to_lower()
+	if _space_tier == FINAL_SPACE_TIER - 1 and normalized_choice not in ["odyssey", "aries"]:
+		return false
 	var cost := int(SPACE_TIER_COSTS[_space_tier])
 	if not GameManager.spend_experience(cost):
-		return
+		return false
 	_space_tier += 1
+	if _space_tier == FINAL_SPACE_TIER:
+		_space_path = normalized_choice
 	maximum_health += 50.0
 	current_health += 50.0
 	spawn_interval = maxf(spawn_interval - 0.18, 2.8)
 	AudioManager.play_spell_sfx(global_position, 420.0 + _space_tier * 55.0, 0.32)
 	VFXManager.spawn_death(get_parent(), global_position, accent_color.lightened(0.25))
 	queue_redraw()
+	return true
+
+
+func get_space_upgrade_state() -> Dictionary:
+	var maxed := _space_tier >= FINAL_SPACE_TIER
+	var needs_choice := _space_tier == FINAL_SPACE_TIER - 1
+	return {
+		"tier": _space_tier,
+		"tier_name": _space_tier_name(),
+		"path": _space_path,
+		"next_cost": 0 if maxed else int(SPACE_TIER_COSTS[_space_tier]),
+		"choice_required": needs_choice,
+		"maxed": maxed,
+		"next_name": "FINAL HULL" if needs_choice else (_space_name_for_tier(_space_tier + 1) if not maxed else ""),
+	}
+
+
+func _space_tier_name() -> String:
+	if _space_tier >= FINAL_SPACE_TIER:
+		return _space_path.capitalize()
+	return _space_name_for_tier(_space_tier)
+
+
+func _space_name_for_tier(tier: int) -> String:
+	return String(SPACE_TIER_NAMES[clampi(tier, 0, SPACE_TIER_NAMES.size() - 1)])
 
 
 func _draw() -> void:
@@ -153,5 +193,5 @@ func _draw() -> void:
 	var ratio := get_health_ratio()
 	draw_rect(Rect2(-38, -55, 76, 6), Color("11131e"), true)
 	draw_rect(Rect2(-38, -55, 76 * ratio, 6), Color("76f29e"), true)
-	var subtitle := "%s%s" % [display_name, " — %s T%d" % [SPACE_TIER_NAMES[_space_tier], _space_tier + 1] if structure_id == "space_camp" else ""]
+	var subtitle := "%s%s" % [display_name, " — %s T%d" % [_space_tier_name(), _space_tier + 1] if structure_id == "space_camp" else ""]
 	draw_string(ThemeDB.fallback_font, Vector2(-68, 48), subtitle, HORIZONTAL_ALIGNMENT_CENTER, 136.0, 12, Color.WHITE)

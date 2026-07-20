@@ -47,6 +47,10 @@ var _seen_damage_event_ids: Dictionary = {}
 var _downed_peers: Dictionary = {}
 var _relic_charges: Dictionary = {}
 var _pending_revive_target := 0
+var _pending_camp_upgrade_id := ""
+var _pending_camp_upgrade_choice := ""
+var _pending_camp_upgrade_request := ""
+var _seen_camp_upgrade_requests: Dictionary = {}
 var _socket := WebSocketPeer.new()
 var _socket_was_open := false
 var _socket_reconnect_remaining := 0.0
@@ -132,6 +136,42 @@ func is_realtime_coop_session() -> bool:
 func get_dropped_relic_count(peer_id: int) -> int:
 	var data := _downed_peers.get(peer_id, {}) as Dictionary
 	return int(data.get("dropped_relics", 0))
+
+
+func request_space_camp_upgrade(camp_id: String, choice := "") -> void:
+	if camp_id.is_empty():
+		return
+	if is_world_authority():
+		_apply_space_camp_upgrade(camp_id, choice)
+		return
+	_pending_camp_upgrade_id = camp_id
+	_pending_camp_upgrade_choice = choice.to_lower()
+	_pending_camp_upgrade_request = "%d-%d" % [local_peer_id, Time.get_ticks_msec()]
+
+
+func _apply_space_camp_upgrade(camp_id: String, choice: String) -> void:
+	for camp_variant in get_tree().get_nodes_in_group("space_camps"):
+		var camp := camp_variant as SpawnerStructure
+		if not is_instance_valid(camp) or "ally-" + str(camp.get_instance_id()) != camp_id:
+			continue
+		camp.request_space_upgrade(choice)
+		return
+
+
+func _handle_space_camp_upgrade_state(state: Dictionary) -> void:
+	var request_id := String(state.get("camp_upgrade_request", ""))
+	if request_id.is_empty() or _seen_camp_upgrade_requests.has(request_id):
+		return
+	_seen_camp_upgrade_requests[request_id] = true
+	_apply_space_camp_upgrade(String(state.get("camp_upgrade_id", "")), String(state.get("camp_upgrade_choice", "")))
+	while _seen_camp_upgrade_requests.size() > 64:
+		_seen_camp_upgrade_requests.erase(_seen_camp_upgrade_requests.keys().front())
+
+
+func _clear_pending_camp_upgrade() -> void:
+	_pending_camp_upgrade_id = ""
+	_pending_camp_upgrade_choice = ""
+	_pending_camp_upgrade_request = ""
 
 
 func notify_local_player_downed() -> void:
@@ -544,6 +584,9 @@ func _capture_player_state() -> Dictionary:
 		"weapon_id": MetaProgression.selected_weapon_id,
 		"maximum_health": health.maximum_health if health != null else 100.0,
 		"revive_target": _pending_revive_target,
+		"camp_upgrade_id": _pending_camp_upgrade_id,
+		"camp_upgrade_choice": _pending_camp_upgrade_choice,
+		"camp_upgrade_request": _pending_camp_upgrade_request,
 	}
 
 
@@ -573,6 +616,7 @@ func _send_socket_sync() -> void:
 	if error == OK:
 		_pending_http_casts.clear()
 		_pending_revive_target = 0
+		_clear_pending_camp_upgrade()
 
 
 func _handle_socket_message(message_text: String) -> void:
@@ -618,6 +662,7 @@ func _apply_socket_sync(message: Dictionary) -> void:
 		var revive_target := int(state.get("revive_target", 0))
 		if revive_target > 0:
 			_try_revive(peer_id, revive_target)
+		_handle_space_camp_upgrade_state(state)
 	for cast_variant in message.get("casts", []):
 		var cast := cast_variant as Dictionary
 		var cast_id := String(cast.get("id", ""))
@@ -678,6 +723,7 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 			_pending_http_casts.remove_at(index)
 	_sync_cast_ids_in_flight.clear()
 	_pending_revive_target = 0
+	_clear_pending_camp_upgrade()
 	for state_variant in response.get("players", []):
 		var state := state_variant as Dictionary
 		var peer_id := int(state.get("peer_id", 0))
@@ -696,6 +742,7 @@ func _on_sync_completed(_result: int, response_code: int, _headers: PackedString
 			var revive_target := int(state.get("revive_target", 0))
 			if revive_target > 0:
 				_try_revive(peer_id, revive_target)
+			_handle_space_camp_upgrade_state(state)
 	for cast_variant in response.get("casts", []):
 		var cast := cast_variant as Dictionary
 		var cast_id := String(cast.get("id", ""))
@@ -756,11 +803,12 @@ func _capture_world_snapshot() -> Dictionary:
 			continue
 		var ally_projectile := node as SpawnerUnitProjectile
 		if ally_projectile != null:
+			var ally_radius := 8.0 if ally_projectile.shot_style in ["odyssey_beam", "aries_beam"] else (3.0 if ally_projectile.shot_style == "aries_dart" else 5.0 + ally_projectile.tier * 0.35)
 			projectiles.append({
 				"id": "ally-shot-" + str(ally_projectile.get_instance_id()), "x": ally_projectile.global_position.x, "y": ally_projectile.global_position.y,
 				"dx": ally_projectile.direction.x, "dy": ally_projectile.direction.y, "speed": ally_projectile.speed,
-				"damage": 0.0, "radius": 5.0 + ally_projectile.tier * 0.35, "lifetime": ally_projectile.lifetime,
-				"color": ally_projectile.accent_color.to_html(false),
+				"damage": 0.0, "radius": ally_radius, "lifetime": ally_projectile.lifetime,
+				"color": ally_projectile.accent_color.to_html(false), "shot_style": ally_projectile.shot_style,
 			})
 	var player_healths := {}
 	var local_health := GameManager.player.get_node_or_null("HealthComponent") as HealthComponent if is_instance_valid(GameManager.player) else null
@@ -951,6 +999,7 @@ func _apply_remote_projectiles(snapshots: Array) -> void:
 		if not is_instance_valid(projectile):
 			projectile = BOSS_PROJECTILE_SCENE.instantiate() as BossProjectile
 			projectile.configure(Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))), Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))), float(data.get("speed", 320.0)), float(data.get("damage", 18.0)), float(data.get("radius", 11.0)), Color(String(data.get("color", "ff4455"))), float(data.get("lifetime", 4.0)))
+			projectile.visual_style = String(data.get("shot_style", "standard"))
 			get_tree().current_scene.add_child(projectile)
 			projectile.collision_mask = 0
 			projectile.monitoring = false
@@ -958,6 +1007,8 @@ func _apply_remote_projectiles(snapshots: Array) -> void:
 		projectile.global_position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 		projectile.direction = Vector2(float(data.get("dx", 1.0)), float(data.get("dy", 0.0))).normalized()
 		projectile.lifetime = float(data.get("lifetime", 1.0))
+		projectile.visual_style = String(data.get("shot_style", "standard"))
+		projectile.queue_redraw()
 	_remove_missing_remote_nodes(_remote_projectiles, active_ids)
 
 
@@ -1028,6 +1079,8 @@ func _reset_network_state() -> void:
 	_peer_token = ""
 	members.clear()
 	game_started = false
+	_clear_pending_camp_upgrade()
+	_seen_camp_upgrade_requests.clear()
 	_connections.clear()
 	_remote_avatars.clear()
 	_remote_world_actors.clear()

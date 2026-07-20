@@ -5,7 +5,7 @@
 script = ExtResource("1")
 id = "space_camp"
 display_name = "Space Camp"
-description = "Upgradeable (in game): starts at 50 health and automatically follows the assault-ship path. Each tier adds 50 health; the final evolution costs 300 gems."
+description = "Upgradeable (in game): use the HUD upgrade button to evolve its fleet. Each tier adds 50 health; at the 300-gem final tier choose Odyssey beams or Aries beam-and-dart bursts."
 spell_scene = ExtResource("2")
 visual_style = 9
 primary_color = Color(0.25, 0.95, 0.95, 1)

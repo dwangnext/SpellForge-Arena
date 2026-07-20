@@ -21,6 +21,12 @@ extends Control
 @onready var control_hint: Label = %Hint
 @onready var cheat_bar: PanelContainer = %CheatBar
 @onready var cheat_status: Label = %CheatStatus
+@onready var space_camp_panel: PanelContainer = %SpaceCampPanel
+@onready var space_camp_status: Label = %Status
+@onready var space_camp_upgrade_button: Button = %UpgradeButton
+@onready var space_camp_final_choices: HBoxContainer = %FinalChoices
+@onready var odyssey_button: Button = %OdysseyButton
+@onready var aries_button: Button = %AriesButton
 
 var _spell_labels: Array[Label] = []
 var _spell_names: Array[String] = []
@@ -31,9 +37,15 @@ var _flash_remaining := 0.0
 var _flash_duration := 0.0
 var _flash_strength := 0.0
 var _last_controller_mode := false
+var _space_camp_refresh_remaining := 0.0
+var _active_space_camp_id := ""
 
 
 func _process(delta: float) -> void:
+	_space_camp_refresh_remaining -= delta
+	if _space_camp_refresh_remaining <= 0.0:
+		_space_camp_refresh_remaining = 0.12
+		_refresh_space_camp_panel()
 	var controller_mode := InputManager.is_using_controller()
 	if controller_mode != _last_controller_mode:
 		_last_controller_mode = controller_mode
@@ -274,3 +286,58 @@ func _on_cheat_points_pressed() -> void:
 func _on_cheat_gems_pressed() -> void:
 	GameManager.add_experience(100)
 	cheat_status.text = "+100 run gems added"
+
+
+func _refresh_space_camp_panel() -> void:
+	var camp := _nearest_space_camp()
+	if camp == null:
+		_active_space_camp_id = ""
+		space_camp_panel.hide()
+		return
+	var state := camp.call("get_space_upgrade_state") as Dictionary
+	_active_space_camp_id = "ally-" + str(camp.get_instance_id()) if camp is SpawnerStructure else String(camp.get("network_id"))
+	var tier_name := String(state.get("tier_name", "Fly"))
+	var tier := int(state.get("tier", 0))
+	var cost := int(state.get("next_cost", 0))
+	var maxed := bool(state.get("maxed", false))
+	var choice_required := bool(state.get("choice_required", false))
+	space_camp_status.text = "CHOOSE FINAL HULL\nODYSSEY: 20 BEAM  •  ARIES: 10 BEAM + 5×3 DARTS" if choice_required else "SPACE CAMP — %s T%d%s" % [tier_name.to_upper(), tier + 1, " — MAXIMUM" if maxed else ""]
+	space_camp_upgrade_button.visible = not maxed and not choice_required
+	space_camp_final_choices.visible = not maxed and choice_required
+	if not maxed and not choice_required:
+		space_camp_upgrade_button.text = "UPGRADE TO %s — %d GEMS" % [String(state.get("next_name", "NEXT TIER")).to_upper(), cost]
+		space_camp_upgrade_button.disabled = GameManager.experience < cost
+	if choice_required:
+		odyssey_button.text = "ODYSSEY — %d GEMS" % cost
+		aries_button.text = "ARIES — %d GEMS" % cost
+		odyssey_button.disabled = GameManager.experience < cost
+		aries_button.disabled = GameManager.experience < cost
+	space_camp_panel.show()
+
+
+func _nearest_space_camp() -> Node2D:
+	var nearest: Node2D
+	var nearest_distance := INF
+	var origin := GameManager.player.global_position if is_instance_valid(GameManager.player) else Vector2.ZERO
+	for group_name in ["space_camps", "remote_space_camps"]:
+		for candidate_variant in get_tree().get_nodes_in_group(group_name):
+			var candidate := candidate_variant as Node2D
+			if not is_instance_valid(candidate) or not candidate.has_method("get_space_upgrade_state"):
+				continue
+			var distance := origin.distance_squared_to(candidate.global_position)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest = candidate
+	return nearest
+
+
+func _on_space_camp_upgrade_pressed() -> void:
+	NetworkManager.request_space_camp_upgrade(_active_space_camp_id)
+
+
+func _on_odyssey_pressed() -> void:
+	NetworkManager.request_space_camp_upgrade(_active_space_camp_id, "odyssey")
+
+
+func _on_aries_pressed() -> void:
+	NetworkManager.request_space_camp_upgrade(_active_space_camp_id, "aries")

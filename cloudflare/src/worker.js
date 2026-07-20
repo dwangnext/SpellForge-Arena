@@ -235,6 +235,9 @@ export class Lobby {
       weapon_id: ["wand", "revolver", "gauntlet", "spawner"].includes(state.weapon_id) ? state.weapon_id : "wand",
       maximum_health: Math.max(1, safeNumber(state.maximum_health, 100, 100000)),
       revive_target: Math.max(0, Math.min(MAX_PLAYERS, Math.trunc(safeNumber(state.revive_target, 0, MAX_PLAYERS)))),
+      camp_upgrade_id: String(state.camp_upgrade_id ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80),
+      camp_upgrade_choice: ["odyssey", "aries"].includes(state.camp_upgrade_choice) ? state.camp_upgrade_choice : "",
+      camp_upgrade_request: String(state.camp_upgrade_request ?? "").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 80),
     };
   }
 

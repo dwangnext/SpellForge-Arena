@@ -7,6 +7,7 @@ var damage := 18.0
 var lifetime := 4.0
 var radius := 11.0
 var accent_color := Color.RED
+var visual_style := "standard"
 
 
 func configure(world_position: Vector2, travel_direction: Vector2, travel_speed: float, amount: float, projectile_radius: float, color: Color, duration: float = 4.0) -> void:
@@ -34,7 +35,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	global_position += direction * speed * delta
-	rotation += delta * 5.0
+	if visual_style in ["odyssey_beam", "aries_beam", "aries_dart"]:
+		rotation = direction.angle()
+	else:
+		rotation += delta * 5.0
 	lifetime -= delta
 	if lifetime <= 0.0:
 		queue_free()
@@ -47,5 +51,13 @@ func _on_body_entered(body: Node) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, radius, accent_color)
-	draw_arc(Vector2.ZERO, radius + 5.0, 0.0, TAU, 18, Color(accent_color, 0.45), 3.0, true)
+	if visual_style in ["odyssey_beam", "aries_beam"]:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(2.4, 0.72))
+		draw_circle(Vector2.ZERO, radius, accent_color)
+		draw_arc(Vector2.ZERO, radius + 2.0, 0.0, TAU, 18, Color.WHITE, 2.0, true)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	elif visual_style == "aries_dart":
+		draw_colored_polygon(PackedVector2Array([Vector2(8, 0), Vector2(-5, -3), Vector2(-5, 3)]), accent_color)
+	else:
+		draw_circle(Vector2.ZERO, radius, accent_color)
+		draw_arc(Vector2.ZERO, radius + 5.0, 0.0, TAU, 18, Color(accent_color, 0.45), 3.0, true)
