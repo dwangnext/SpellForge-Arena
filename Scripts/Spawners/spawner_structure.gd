@@ -4,6 +4,7 @@ extends StaticBody2D
 const SPACE_TIER_NAMES := ["Fly", "Delta", "Pioneer", "Crusader", "Marauder"]
 const SPACE_TIER_COSTS := [30, 60, 110, 180, 300]
 const FINAL_SPACE_TIER := 5
+const MAX_UNITS_PER_STRUCTURE := 5
 
 var structure_id := "frontier_tent"
 var display_name := "Frontier Tent"
@@ -18,6 +19,7 @@ var _spawn_remaining := 1.0
 var _space_tier := 0
 var _space_path := ""
 var _is_destroyed := false
+var _spawned_units: Array[SpawnerUnit] = []
 
 
 func configure(id: String, title: String, position: Vector2, color: Color) -> void:
@@ -110,6 +112,9 @@ func get_network_actor_data() -> Dictionary:
 
 
 func _spawn_unit() -> void:
+	_prune_spawned_units()
+	if _spawned_units.size() >= MAX_UNITS_PER_STRUCTURE:
+		return
 	var active_units := get_tree().get_nodes_in_group("spawner_units")
 	if active_units.size() >= 60:
 		var oldest := active_units.front() as Node
@@ -130,6 +135,18 @@ func _spawn_unit() -> void:
 		_space_path
 	)
 	get_parent().add_child(unit)
+	_spawned_units.append(unit)
+
+
+func get_spawned_unit_count() -> int:
+	_prune_spawned_units()
+	return _spawned_units.size()
+
+
+func _prune_spawned_units() -> void:
+	for index in range(_spawned_units.size() - 1, -1, -1):
+		if not is_instance_valid(_spawned_units[index]) or _spawned_units[index].is_queued_for_deletion():
+			_spawned_units.remove_at(index)
 
 
 func request_space_upgrade(choice := "") -> bool:
