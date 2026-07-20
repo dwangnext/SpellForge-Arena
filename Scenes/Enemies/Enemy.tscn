@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Enemies/enemy_controller.gd" id="1_enemy"]
 [ext_resource type="Script" path="res://Scripts/Components/health_component.gd" id="2_health"]
@@ -8,6 +8,9 @@
 
 [sub_resource type="CircleShape2D" id="CircleShape_enemy"]
 radius = 20.0
+
+[sub_resource type="CircleShape2D" id="CircleShape_contact"]
+radius = 27.0
 
 [node name="Enemy" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 4
@@ -38,4 +41,4 @@ collision_mask = 1
 script = ExtResource("4_contact")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ContactDamageComponent"]
-shape = SubResource("CircleShape_enemy")
+shape = SubResource("CircleShape_contact")
